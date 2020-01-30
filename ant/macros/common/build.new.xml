@@ -1,0 +1,295 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+
+<project name='abacus-temporary-holding-area' default='dist' basedir='../../macros.abacus' xmlns:ivy='antlib:org.apache.ivy.ant' xmlns:bnd='bnd'>
+
+   <property environment="env"/>
+   <import file='${env.ANT_TOOLS_HOME}/ant.init.xml'/>
+
+   <property name='version.string' value='1.0.0-0'/> <!-- used by ivy -->
+
+   <target name='logging.properties'>
+      <if>
+         <equals arg1='${build.mode}' arg2='debug'/>
+         <then>
+            <copy file='${tree.top}/components/abacus-java18/image/etc/logging.properties.template' toFile='${image.dir}/${product.name}/etc/logging.properties'>
+               <filterset>
+                  <filter token='LOG_LEVEL'    value="debug"/>
+                  <filter token='PRODUCT_NAME' value="${product.name}"/>
+               </filterset>
+            </copy>
+         </then>
+         <else>
+            <copy file='${tree.top}/components/abacus-java18/image/etc/logging.properties.template' toFile='${image.dir}/${product.name}/etc/logging.properties'>
+               <filterset>
+                  <filter token='LOG_LEVEL'    value="info"/>
+                  <filter token='PRODUCT_NAME' value="${product.name}"/>
+               </filterset>
+            </copy>
+         </else>
+      </if>
+   </target>
+
+   <!-- if the target is dist.lib, build, test, and publish the bin, source, and doc locally -->
+   <!-- if the target is rpm, build the rpm.  Will need to override at least part of the rpm target in each build file -->
+
+   <target name='dist.lib' depends="identify.build, publish">
+      <mark.build.complete/>
+   </target>
+
+   <target name='common.dist.prepare' depends='identify.build, compile, check.jars, dist.parts'/>
+
+   <target name='publish' depends='gen.pom, publish.local'/>
+
+   <target name="gen.pom">
+      <if>
+         <available file="${basedir}/ivy.xml"/>
+         <then>
+            <ivy.gen.pom ivyfile="${basedir}/ivy.xml" outfile="${jar.dir}/${ant.project.name}.pom"/>
+         </then>
+         <else>
+            <echo message="No IVY file exists, skipping pom file generation."/>
+         </else>
+      </if>
+   </target>
+   
+   <target name='docker.build'>
+      <docker.build/>
+   </target>
+   
+   <target name='docker.dist'>
+      <docker.dist/>
+   </target>
+
+   <target name='publish.local' depends='test' description='publish locally'>
+      <delete>
+         <fileset dir="${ivy.cache.dir}" includes="**/${ant.project.name}, **/*${ant.project.name}*"/>
+      </delete>
+      <ivy.publish ver='${version.string}' dir='${jar.dir}' name='${ant.project.name}' resolver='local' ivy.flag.file='${tmp.dir}/ivy.published.at'/>
+   </target>
+
+   <!-- execute always if dir exists -->
+   <target name='test' depends='jars, compile.tests'>
+      <if>
+         <available file='${source.dir}' type='dir'/>
+         <then>
+            <for param='sub.dir'>
+               <dirset id='dirset' dir='${source.dir}'>
+                  <include name='test/java'/>
+                  <include name='test/unit/java'/>
+               </dirset>
+               <sequential>
+                  <if>
+                     <available file='@{sub.dir}' type='dir'/>
+                     <then>
+                        <ivy.resolve/>
+                        <path id='test.run.class.path'>
+                           <path refid='ivy.test.path'/>
+                           <fileset dir='${jar.dir}' includes='${ant.project.name}.jar'/>
+                           <pathelement location='${class.test.dir}'/>
+                           <pathelement location='${basedir}/image/etc'/>
+                        </path>
+                        <junit.runTests src.dir='@{sub.dir}' out.dir='${test.results.dir}' classpathref='test.run.class.path'/>
+                     </then>
+                  </if>
+                </sequential>
+             </for>
+         </then>
+      <else>
+         <echo message='Java test dir not found, skipping'/>
+      </else>
+      </if>
+   </target>
+   
+   <target name='check.jars'>
+      <if>
+         <available file='${java.main.src.dir}' type='dir'/>
+         <then>
+            <jars/>
+         </then>
+      </if>
+   </target>
+
+   <target name='jars' depends='lib.jar, src.jar, doc.jar'/>
+
+   <target name='compile.tests'>
+      <if>
+         <available file='${source.dir}' type='dir'/>
+         <then>
+            <for param='sub.dir'>
+               <dirset id='dirset' dir='${source.dir}'>
+                  <include name='test/**/java'/>
+               </dirset>
+               <sequential>
+                  <if>
+                     <available file='@{sub.dir}' type='dir'/>
+                     <then>
+                        <ivy.resolve/>
+                        <path id='test.class.path'>
+                           <path refid='ivy.test.path'/>
+                           <fileset dir='${jar.dir}' includes='${ant.project.name}.jar'/>
+                        </path>
+                        <java.test.build src.dir='@{sub.dir}'
+                                         tmp.dir='${tmp.dir}'
+                                         class.dir='${class.test.dir}'
+                                         project.name='${ant.project.name}'
+                                         classpathref='test.class.path'/>
+                     </then>
+                     <else>
+                        <echo message='Java test directory not found, skipping'/>
+                     </else>
+                  </if>
+                 </sequential>
+            </for>
+         </then>
+         <else>
+            <echo message='${source.dir} not found, skipping'/>
+         </else>
+      </if>
+   </target>
+
+   <target name='lib.jar'>
+      <if>
+         <available file='${basedir}/ivy.xml'/>
+         <then>
+            <ivy.retrieve copyToDir='${jar.dir}'/>
+            <!-- ivy.printPaths/ -->
+         </then>
+         <!--
+         <else>
+            <echo message='${basedir}/ivy.xml not found, skipping'/>
+         </else>
+         -->
+      </if>
+      <if>
+         <available file='${java.main.src.dir}' type='dir'/>
+         <then>
+            <mkdir dir='${jar.dir}'/>
+            <path id='building.class.path'>
+               <path refid='ivy.compile.path'/>
+               <pathelement location='${class.dir}'/>
+               <fileset dir='${jar.dir}'>
+                  <include name='**/*-generated.jar'/>
+               </fileset>
+            </path>
+            <!--
+            <local name='cpProp'/>
+            <pathconvert property='cpProp' refid='building.class.path'/>
+            <echo message='Classpath is ${cpProp}'/>
+            -->
+            <if>
+               <available file='${bnd.main.src.dir}' type='dir'/>
+               <then>
+                  <if>
+                     <isset property="make.skinny.bundle"/>
+                     <then>
+                        <path id='bundle.class.path'>
+                           <fileset dir='${jar.dir}'>
+                              <include name='**/${jar.name}'/>
+                           </fileset>
+                        </path>
+                        <property name="bnd.build.classpath" value="bundle.class.path"/>
+                     </then>
+                     <else>
+                        <property name="bnd.build.classpath" value="building.class.path"/>
+                     </else>
+                  </if>
+                  <echo message="Found BND directory: ${bnd.main.src.dir}"/>
+                  <java.jar src.dir='${java.main.src.dir}'
+                            tmp.dir='${tmp.dir}'
+                            project.name='${ant.project.name}'
+                            class.dir='${class.dir}'
+                            classpathref='building.class.path'
+                            jar.dir='${jar.dir}'
+                            jar.name='${jar.name}'/>
+                  <!-- Find the .bnd file.  There should only be 1 -->
+                  <pathconvert property='bnd.main.src.file' pathsep=','>
+                     <fileset dir='${bnd.main.src.dir}'>
+                        <include name='*.bnd'/>
+                     </fileset>
+                  </pathconvert>
+                  <echo message="Found BND file: ${bnd.main.src.file} - class.dir=${class.dir} - jar.dir=${jar.dir}"/>
+                  <!-- <delete file='${jar.dir}/${jar.name}'/> -->
+                  <bnd:bnd failok='false'
+                           eclipse='false'
+                           files='${bnd.main.src.file}'
+                           output='${tmp.dir}/${jar.name}'
+                           classpathref='${bnd.build.classpath}'
+                           />
+                  <copy file='${tmp.dir}/${jar.name}' tofile='${jar.dir}/${jar.name}' force='true' overwrite='true'/>
+               </then>
+               <else>
+                  <!-- echo message="No BND directory '${bnd.main.src.dir}' regular .jar file building"/ -->
+                  <java.jar src.dir='${java.main.src.dir}'
+                            tmp.dir='${tmp.dir}'
+                            project.name='${ant.project.name}'
+                            class.dir='${class.dir}'
+                            classpathref='building.class.path'
+                            jar.dir='${jar.dir}'
+                            jar.name='${jar.name}'/>
+               </else>
+            </if>
+         </then>
+         <!--
+         <else>
+            <echo message='${java.main.src.dir} not found, skipping'/>
+         </else>
+         -->
+      </if>
+   </target>
+
+   <target name='doc.jar'>
+      <if>
+         <available file='${basedir}/ivy.xml'/>
+         <then>
+            <ivy.resolve/>
+         </then>
+         <!--
+         <else>
+            <echo message='${basedir}/ivy.xml not found, skipping'/>
+         </else>
+         -->
+      </if>
+      <if>
+         <available file='${java.main.src.dir}' type='dir'/>
+         <then>
+            <local name='javadocClassPath'/>
+            <path id='javadocClassPath'>
+               <path refid='ivy.compile.path'/>
+               <fileset dir='${jar.dir}'>
+                  <include name='**/*.jar'/>
+               </fileset>
+            </path>
+            <java.docjar src.dir='${java.main.src.dir}'
+                         doc.dir='${doc.api.dir}'
+                         jar.dir='${jar.dir}'
+                         jar.name='${ant.project.name}-javadoc'
+                         project.name='${ant.project.name}'
+                         classpathref='javadocClassPath'>
+               <paths>
+                  <path refid='javadocClassPath'/>
+               </paths>
+            </java.docjar>
+         </then>
+         <!--
+         <else>
+            <echo message='${java.main.src.dir} not found, skipping'/>
+         </else>
+         -->
+      </if>
+   </target>
+
+   <target name='src.jar'>
+      <if>
+         <available file='${source.dir}' type='dir'/>
+         <then>
+            <java.srcjar out.dir='${jar.dir}' src.dir='${source.dir}' name='${ant.project.name}'/>
+         </then>
+         <!--
+         <else>
+            <echo message='${source.dir} not found, skipping'/>
+         </else>
+         -->
+      </if>
+   </target>
+
+</project>

@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<project name="tasks.versionChecks.xml">
+
+   <macrodef name="check.ant.and.java.version">
+      <attribute name="expected.ant.version"/>
+      <attribute name="expected.java.version"/>
+      <attribute name="expected.java.version.regex"/>
+      <sequential>
+         <!-- check the java compiler version -->
+         <fail message="Found java version ${java.version} but expected @{expected.java.version}">
+            <condition>
+               <not>
+                  <matches pattern="@{expected.java.version.regex}" string="${java.version}"/>
+               </not>
+            </condition>
+         </fail>
+         <!-- check the ant version -->
+         <fail message="Found ant version ${ant.version} but expected @{expected.ant.version}">
+            <condition>
+               <not>
+                  <antversion atleast="@{expected.ant.version}"/>
+               </not>
+            </condition>
+         </fail>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='check.if.executable.exists'>
+      <attribute name='executable'/>
+      <attribute name='os'       default='unix'/>
+      <attribute name='filepath' default='${env.PATH}'/>
+      <attribute name='winfilepath' default='${env.Path};${env.PATH}'/>
+      <sequential>
+         <local name='isExecutableAvailable'/>
+         <condition property='isExecutableAvailable'>
+            <or>
+               <and>
+                  <os family='@{os}'/>
+                  <available file='@{executable}' filepath='@{filepath}'/>
+               </and>
+               <and>
+                  <os family='windows'/>
+                  <or>
+                     <available file='@{executable}.exe' filepath='@{winfilepath}'/>
+                     <available file='@{executable}.cmd' filepath='@{winfilepath}'/>
+                     <available file='@{executable}.bat' filepath='@{winfilepath}'/>
+                     <available file='@{executable}.EXE' filepath='@{winfilepath}'/>
+                     <available file='@{executable}.CMD' filepath='@{winfilepath}'/>
+                     <available file='@{executable}.BAT' filepath='@{winfilepath}'/>
+                  </or>
+               </and>
+            </or>
+         </condition>
+         <fail unless="isExecutableAvailable" message="Executable '@{executable}' not installed or wrong version, cannot continue"/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="check.basic.requirements">
+      <sequential>
+         <fail message="Currently only EL based systems are supported">
+            <condition>
+               <not>
+                  <available file="/etc/redhat-release"/>
+               </not>
+            </condition>
+         </fail>
+         <check.ant.and.java.version expected.ant.version="${expected.ant.version}"
+                                     expected.java.version="${expected.java.version}"
+                                     expected.java.version.regex="${expected.java.version.regex}"/>
+         <check.if.executable.exists executable='docker'/>
+         <check.if.executable.exists executable='eslint'/>
+         <check.if.executable.exists executable='lessc'/>
+         <check.if.executable.exists executable='jq'/>
+         <echo message="System is ready to build" />
+      </sequential>
+   </macrodef>
+
+</project>

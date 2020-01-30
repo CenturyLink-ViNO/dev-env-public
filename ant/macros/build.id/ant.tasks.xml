@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<project name="tasks.buildId.xml">
+
+   <macrodef name='mark.build.complete'>
+      <sequential>
+         <echo message='Project: ${product.name} build complete'/>
+         <echo message='__________________________________________________________________________________________'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='identify.build'>
+      <sequential>
+         <echo message='__________________________________________________________________________________________'/>
+         <echo message='Project: ${ant.project.name} build starting'/>
+      </sequential>
+   </macrodef>
+
+   <!-- if this is running in hudson/jenkins, some of these are in the environment -->
+   <macrodef name="build.id">
+      <attribute name="id"/>
+      <attribute name="build.time"/>
+      <sequential>
+         <if>
+            <isset property="env.BUILD_NUMBER"/>
+            <then>
+               <property name="BUILD_ID"     value="${env.BUILD_ID}"/>
+               <property name="BUILD_NUMBER" value="${env.BUILD_NUMBER}"/>
+               <property name="JOB_NAME"     value="${env.JOB_NAME}"/>
+            </then>
+            <else>
+               <property name="BUILD_ID"     value="@{build.time}"/>
+               <property name="BUILD_NUMBER" value="${BUILD_ID}"/>
+               <property name="JOB_NAME"     value="private_${user.name}"/>
+            </else>
+         </if>
+         <property name='version.buildid' value='${BUILD_ID}'/>
+      </sequential>
+   </macrodef>
+
+</project>

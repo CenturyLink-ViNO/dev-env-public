@@ -1,0 +1,295 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+
+<project name="tasks.analysis.xml">
+
+   <dirname property="tasks.analysis.dir" file="${ant.file.tasks.analysis.xml}"/>
+
+   <macrodef name="clean.static.analysis.results">
+      <attribute name='dir'/>
+      <sequential>
+         <delete file="@{dir}/csSummary.txt"/>
+         <delete file="@{dir}/eclipseSummary.txt"/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.java.static.analysis'>
+      <attribute name='dir'/>
+      <sequential>
+        <if>
+           <available file="@{dir}/project" type="dir"/>
+           <then>
+              <echo message='Static Analysis results'/>
+              <summarize.java.static.analysis.findBugs dir='@{dir}/project'/>
+              <summarize.java.static.analysis.pmd dir='@{dir}/project'/>
+              <summarize.java.static.analysis.ecj dir='@{dir}/project'/>
+              <summarize.java.static.analysis.checkstyle dir='@{dir}/project'/>
+              <summarize.javascript.static.analysis.eslint dir='@{dir}/project'/>
+           </then>
+           <else>
+              <echo message='No static analysis results available'/>
+           </else>
+        </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.java.static.analysis.findBugs'>
+      <attribute name='dir'/>
+      <sequential>
+         <echo message="Static Analysis from FindBugs"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/findBugsSummary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.java.static.analysis.pmd'>
+      <attribute name='dir'/>
+      <sequential>
+         <echo message="Static Analysis from PMD"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/pmdSummary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.java.static.analysis.checkstyle'>
+      <attribute name='dir'/>
+      <sequential>
+         <echo message="Static Analysis from Checkstyle"/>
+         <delete file='@{dir}/checkstyle_terse.txt'/>
+         <concat destfile='@{dir}/checkstyle_terse.txt'>
+            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+         <echo message="Checkstyle issues by Component"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <delete file='@{dir}/checkstyle_type.txt'/>
+         <concat destfile='@{dir}/checkstyle_type.txt'>
+            <fileset dir='@{dir}' includes='**/checkstyle_type_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <echo/>
+         <echo message="Checkstyle issues by Component and Type"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/checkstyle_counts.properties'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                  <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+         <!--
+         <concat>
+            <fileset dir='@{dir}' includes='checkstyle_t*.txt'/>
+         </concat>
+         -->
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.javascript.static.analysis.eslint'>
+      <attribute name='dir'/>
+      <sequential>
+         <echo message="Static Analysis from ESLint"/>
+         <delete file='@{dir}/ESLint_checkstyle_terse.txt'/>
+         <concat destfile='@{dir}/ESLint_checkstyle_terse.txt'>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+         <echo message="ESLint issues by Component"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <delete file='@{dir}/ESLint_checkstyle_type.txt'/>
+         <concat destfile='@{dir}/ESLint_checkstyle_type.txt'>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_type_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <echo/>
+         <echo message="ESLint issues by Component and Type"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_counts.properties'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                  <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='summarize.java.static.analysis.ecj'>
+      <attribute name='dir'/>
+      <sequential>
+         <echo message="Static Analysis from ECJ"/>
+         <delete file='@{dir}/ecj_terse.txt'/>
+         <concat destfile='@{dir}/ecj_terse.txt'>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="0\tEclipse Compiler Warnings"/>
+               </linecontainsregexp>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <echo message="Eclipse issues by component"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                 <regexp pattern="0\tEclipse Compiler Warnings"/>
+               </linecontainsregexp>
+               <linecontainsregexp negate="true">
+                  <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+         <echo/>
+
+         <echo message="Eclipse issues by Component and Type"/>
+         <concat>
+            <fileset dir='@{dir}' includes='**/eclipse.counts.properties'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                  <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+
+         <delete file='@{dir}}/ecj_types.txt'/>
+         <concat destfile='@{dir}/ecj_types.txt'>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_types.txt'/>
+            <filterchain>
+               <linecontainsregexp negate="true">
+                  <regexp pattern="^\s+$"/>
+               </linecontainsregexp>
+            </filterchain>
+         </concat>
+         <!--
+         <concat>
+            <fileset dir='@{dir}' includes='ecj_*.txt'/>
+         </concat>
+         -->
+      </sequential>
+   </macrodef>
+
+ <scriptdef name="compare.checkstyle.results" language="javascript">
+      <attribute name="project.name"/>
+      <attribute name="actual"/>
+      <![CDATA[
+         var fail = false;
+         var actualFileName = attributes.get("actual");
+         java.lang.System.out.println("loading properties from [" + actualFileName + "]");
+         var actualFile = new java.io.FileInputStream(new java.io.File(actualFileName));
+         var actual = new java.util.Properties();
+         actual.load(actualFile);
+         var list = actual.propertyNames();
+         while ( list.hasMoreElements() )
+         {
+            var oneKey = list.nextElement();
+            if (oneKey.indexOf("UNKNOWN") !== -1)
+            {
+               fail = true;
+            }
+            var stringValue = actual.getProperty(oneKey);
+            if ( stringValue != null )
+            {
+               var actualValue = 0;
+               try
+               {
+                  actualValue = new java.lang.Integer(stringValue).intValue();
+               }
+               catch (err)
+               {
+                  actualValue = 0;
+               }
+               // java.lang.System.out.println("Checking: [" + oneKey + "] value is [" + actualValue + "]");
+               var maxAllowedValue = 0;
+               var maxAllowedValueString = project.getProperty(oneKey);
+               if (maxAllowedValueString != null)
+               {
+                  try
+                  {
+                     maxAllowedValue = new java.lang.Integer(maxAllowedValueString.trim()).intValue();
+                  }
+                  catch (err)
+                  {
+                     maxAllowedValue = 0;
+                  }
+               }
+               if ( actualValue > maxAllowedValue )
+               {
+                  fail = true;
+                  java.lang.System.out.println("ERROR: " + actualValue + " / " + maxAllowedValue + " allowed " + oneKey + " issues found");
+               }
+               else
+               {
+                  java.lang.System.out.println(actualValue + " / " + maxAllowedValue + " allowed " + oneKey + " issues found");
+               }
+            }
+         }
+         if ( fail )
+         {
+            // var allowCheckstyleErrorsKey = attributes.get("project.name") + ".checkstyle.allow.all";
+            // var allowCheckstyleErrors = project.getProperty(allowCheckstyleErrorsKey);
+            var failTask = project.createTask("fail");
+            failTask.setMessage("==================================================================");
+            failTask.perform();
+            failTask.perform();
+            failTask.setMessage("CHECKSTYLE Issue count too high");
+            failTask.perform();
+            failTask.setMessage("==================================================================");
+            failTask.perform();
+            failTask.perform();
+         }
+      ]]>
+   </scriptdef>
+
+
+
+</project>
+

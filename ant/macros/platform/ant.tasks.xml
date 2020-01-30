@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<project name="tasks.platform.xml">
+
+   <dirname property="tasks.platform.dir" file="${ant.file.tasks.platform.xml}"/>
+
+   <condition property="os.windows" value="true">
+      <os family="windows"/>
+   </condition>
+
+   <condition property="os.linux" value="true">
+      <os family="unix"/>
+   </condition>
+
+   <if>
+      <isset property="os.linux"/>
+      <then>
+         <exec executable="uname" outputproperty="pltform">
+            <arg value="-a"/>
+         </exec>
+         <condition property="ubuntu">
+            <matches pattern="Ubuntu" string="${pltform}"/>
+         </condition>
+      </then>
+   </if>
+
+   <macrodef name='execbash'>
+      <attribute name="exec.dir"/>
+      <element name="args"/>
+      <sequential>
+         <check.if.executable.exists executable='bash'/>
+         <exec executable="bash" dir="@{exec.dir}" osfamily="unix">
+            <args/>
+         </exec>
+         <exec executable="cmd" dir="@{exec.dir}" osfamily="windows">
+            <arg value="/c"/>
+            <arg value="bash"/>
+            <args/>
+         </exec>
+      </sequential>
+   </macrodef>
+
+</project>

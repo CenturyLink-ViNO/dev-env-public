@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<project name="tasks.javascript.xml" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+   <dirname property="tasks.javascript.dir" file="${ant.file.tasks.javascript.xml}"/>
+
+   <macrodef name="javascript.build">
+      <attribute name="src.dir"/>
+      <attribute name="out.dir"/>
+      <attribute name='failonerror'     default='true'/>
+      <attribute name='sourceType'      default='node'/>
+      <attribute name='file.extension'  default='.js'/>
+      <sequential>
+         <eslint out.dir='@{out.dir}' src.dir='@{src.dir}' failonerror='@{failonerror}' sourceType='@{sourceType}' file.extension='@{file.extension}'/>
+      </sequential>
+   </macrodef>
+
+</project>

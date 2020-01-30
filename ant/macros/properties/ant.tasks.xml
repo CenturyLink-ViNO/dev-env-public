@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<project name="tasks.properties.xml">
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="header.info">
+      <attribute name="verbose" default="false"/>
+      <attribute name="quiet"   default="true"/>
+      <sequential>
+         <if>
+            <not>
+               <equals arg1="${echoedHeaderInfo}" arg2="true" casesensitive="false"/>
+            </not>
+            <then>
+               <if>
+                  <equals arg1="@{verbose}" arg2="true" casesensitive="false"/>
+                  <then>
+                     <echo.all.props/>
+                  </then>
+               </if>
+               <if>
+                  <equals arg1="@{quiet}" arg2="false" casesensitive="false"/>
+                  <then>
+                     <echo.relavent.properties/>
+                  </then>
+               </if>
+               <property name='echoedHeaderInfo' value='true'/>
+            </then>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="echo.all.props">
+      <sequential>
+         <echo.props which="ant"/>
+         <echo.props which="env"/>
+         <echo.props which="hg"/>
+         <echo.props which="hostinfo"/>
+         <echo.props which="ivy"/>
+         <echo.props which="java"/>
+         <echo.props which="os"/>
+         <echo.props which="rpm"/>
+         <echo.props which="sun"/>
+         <echo.props which="task"/>
+         <echo.props which="user"/>
+         <echo.props which="others"/>
+      </sequential>
+   </macrodef>
+
+  <!-- ======================================================================================================== -->
+
+   <macrodef name="echo.props">
+      <attribute name="which"/>
+      <sequential>
+         <echo message="--------------- @{which}.properties ---------------"/>
+         <if>
+            <equals arg1="@{which}" arg2="others"/>
+            <then>
+               <echoproperties>
+                  <propertyset negate="true">
+                     <propertyref regex="^(ant).*"/>
+                     <propertyref regex="^(env).*"/>
+                     <propertyref regex="^(hg).*"/>
+                     <propertyref regex="^(hostinfo).*"/>
+                     <propertyref regex="^(ivy).*"/>
+                     <propertyref regex="^(awt).*"/>
+                     <propertyref regex="^(java).*"/>
+                     <propertyref regex="^(file).*"/>
+                     <propertyref regex="^(line).*"/>
+                     <propertyref regex="^(path).*"/>
+                     <propertyref regex="^(os).*"/>
+                     <propertyref regex="^(rpm).*"/>
+                     <propertyref regex="^(sun).*"/>
+                     <propertyref regex="^(task).*"/>
+                     <propertyref regex="^(user).*"/>
+                  </propertyset>
+               </echoproperties>
+            </then>
+            <else>
+               <if>
+                  <equals arg1="@{which}" arg2="java"/>
+                  <then>
+                     <echoproperties>
+                        <propertyset>
+                           <propertyref regex="^(awt).*"/>
+                           <propertyref regex="^(java).*"/>
+                           <propertyref regex="^(file).*"/>
+                           <propertyref regex="^(line).*"/>
+                           <propertyref regex="^(path).*"/>
+                        </propertyset>
+                     </echoproperties>
+                  </then>
+                  <else>
+                     <echoproperties prefix="@{which}"/>
+                  </else>
+               </if>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="echo.relavent.properties">
+      <sequential>
+         <echo message="Java             : ${java.vendor}, Java ${java.version} from ${java.home}"/>
+         <echo message="Ant              : ${ant.version} from ${ant.home}"/>
+         <echo message="ant.library.dir  : ${ant.library.dir}"/>
+         <echo message="ant.addon.dir    : ${tasks.ant.addons.dir}"/>
+         <echo message="os               : ${os.name}/${os.arch}"/>
+         <echo message="user.name        : ${user.name}"/>
+         <echo message="user.home        : ${user.home}"/>
+         <echo message="Build Device IP  : ${hostinfo.ip.address}"/>
+         <echo message="BuildMode        : ${build.mode}"/>
+         <echo message="TStamp           : ${TSTAMP}"/>
+         <echo message="DStamp           : ${DSTAMP}"/>
+         <echo message="Today            : ${TODAY}"/>
+         <echo message="ant.file         : ${ant.file}"/>
+         <echo message="tree.top         : ${tree.top}"/>
+         <echo message="Project Basedir  : ${basedir}"/>
+         <echo message="ant.project.name : ${ant.project.name}"/>
+         <echo message="BUILD_ID         : ${BUILD_ID}"/>
+         <echo message="BUILD_NUMBER     : ${BUILD_NUMBER}"/>
+         <echo message="JOB_NAME         : ${JOB_NAME}"/>
+         <echo message="version.major    : ${version.major}"/>
+         <echo message="version.minor    : ${version.minor}"/>
+         <echo message="version.revision : ${version.revision}"/>
+         <echo message="version.fix      : ${version.fix}"/>
+         <echo message="version.buildid  : ${version.buildid}"/>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+</project>

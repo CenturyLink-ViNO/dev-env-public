@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<project name="tasks.treeTop.xml">
+
+   <dirname property="tasks.treeTop.dir" file="${ant.file.tasks.treeTop.xml}"/>
+
+   <!-- ===================================================================================================== -->
+   <!--                                             tree top                                                  -->
+   <!-- ===================================================================================================== -->
+
+   <macrodef name="find.tree.top">
+      <attribute name="file"     default="treeTop.txt"/>
+      <attribute name="startDir" default="${basedir}"/>
+      <sequential>
+         <find.file.up file="@{file}" dir="@{startDir}"/>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="find.file.up">
+      <attribute name="file" default="treeTop.txt"/>
+      <attribute name="dir"  default="${basedir}"/>
+      <sequential>
+         <var unset="true" name="upOne"/>
+         <if>
+            <available file="@{dir}/@{file}"/>
+            <then>
+               <dirname property="treeTopTmp" file="@{dir}/@{file}"/>
+               <pathconvert property="tree.top">
+                  <path location="${treeTopTmp}"/>
+               </pathconvert>
+               <var unset="true" name="treeTopTmp"/>
+            </then>
+            <else>
+               <dirname property="upOne" file="@{dir}/.."/>
+               <if>
+                  <available file="${upOne}" type="dir"/>
+                  <then>
+                     <find.file.up file="@{file}" dir="@{dir}/.."/>
+                  </then>
+                  <else>
+                     <fail message="File @{file} not found."/>
+                  </else>
+               </if>
+               <var unset="true" name="upOne"/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+</project>

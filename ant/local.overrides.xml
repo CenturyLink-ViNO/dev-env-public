@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<project name='project.overrides' xmlns:ivy='antlib:org.apache.ivy.ant'>
+
+   <dirname property="ant.project.overrides.xml.dir" file="${ant.file.project.overrides}"/>
+
+   <property environment="env"/>
+   <property name='abacus.product.name' value='${env.ABACUS_PRODUCT_NAME}'/>
+   <fail message='ABACUS_PRODUCT_NAME not set in environment' unless='abacus.product.name'/>
+   <property name='allowed.checkstyle.violations.file' value='${tree.top}/${abacus.product.name}/product.settings/allowed.checkstyle.violations.properties'/>
+
+   <import optional='true' file="${user.home}/ant/ant.global.overrides.xml"/>
+
+   <import optional='true' file='${tree.top}/${abacus.product.name}/product.settings/product.properties.xml'/>
+
+   <if>
+      <available file='${tree.top}/${abacus.product.name}/product.settings/product.properties'/>
+      <then>
+         <property file='${tree.top}/${abacus.product.name}/product.settings/product.properties'/>
+      </then>
+   </if>
+
+</project>

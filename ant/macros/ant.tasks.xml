@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<project name="tasks.ant.addons.xml">
+
+   <dirname property="tasks.ant.addons.dir"     file="${ant.file.tasks.ant.addons.xml}"/>
+
+   <tstamp>
+      <format property="build.time" pattern="yyMMdd_HHmm"/>
+   </tstamp>
+   <property environment="env"/>
+
+   <property name="expected.ant.version" value="1.9.4"/>
+   <property name="expected.java.version" value="1.8"/>
+   <property name="expected.java.version.regex" value="^1\.8\.0"/>
+
+   <!-- ensure that we have the correct versions of java and ant -->
+   <import file="${tasks.ant.addons.dir}/version.checks/ant.tasks.xml"/>
+
+   <check.ant.and.java.version expected.ant.version="${expected.ant.version}"
+                               expected.java.version="${expected.java.version}"
+                               expected.java.version.regex="${expected.java.version.regex}"/>
+
+   <!-- add macros to determine the top of the tree -->
+   <import file="${tasks.ant.addons.dir}/tree.top/ant.tasks.xml"/>
+   <find.tree.top/>
+
+   <!-- give a chance to override some properties -->
+   <import file="${tasks.ant.addons.dir}/user.properties/ant.tasks.xml"/>
+
+   <if>
+      <equals arg1="${build.mode}" arg2="debug"/>
+      <then>
+         <property name="build.mode.debug" value="true"/>
+      </then>
+      <else>
+         <property name="build.mode.release" value="true"/>
+      </else>
+   </if>
+
+   <!-- load the global properties -->
+   <if>
+      <available file='${ant.project.overrides.xml.dir}/../../private/ant/macros/ant.private.properties'/>
+      <then>
+         <property file='${ant.project.overrides.xml.dir}/../../private/ant/macros/ant.private.properties'/>
+      </then>
+   </if>
+   <property file="${tasks.ant.addons.dir}/ant.properties"/>
+   <import file="${tasks.ant.addons.dir}/ant.dirs.xml"/>
+
+   <import file="${tasks.ant.addons.dir}/build.id/ant.tasks.xml"/>
+   <build.id id="${hg.changeset}" build.time="${build.time}"/>
+
+   <!-- now, just add the remaining definitions -->
+   <for param="addon">
+      <path>
+         <dirset dir="${tasks.ant.addons.dir}" includes="*"/>
+      </path>
+      <sequential>
+         <if>
+            <available file='@{addon}/ant.tasks.xml'/>
+            <then>
+               <import file="@{addon}/ant.tasks.xml"/>
+            </then>
+         </if>
+      </sequential>
+   </for>
+
+</project>

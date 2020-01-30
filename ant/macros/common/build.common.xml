@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<project name='build.common' default='dist' xmlns:ivy='antlib:org.apache.ivy.ant'>
+
+   <dirname property='build.common.xml.dir' file='${ant.file.build.common}'/>
+
+   <macrodef name='build.dependent.library'>
+      <attribute name='dir'/>
+      <sequential>
+          <uptodate property='up-to-date-@{dir}' targetfile='${tmp.dir}/../@{dir}/@{dir}.built.at'>
+              <srcfiles dir='${tree.top}/@{dir}' includes='**/*'/>
+          </uptodate>
+          <if>
+              <not>
+                  <isset property='up-to-date-@{dir}'/>
+              </not>
+              <then>
+                  <if>
+                     <available file='${tree.top}/@{dir}/build.xml'/>
+                     <then>
+                        <subant inheritrefs='false' target='dist'>
+                           <fileset dir='${tree.top}/@{dir}' includes='build.xml'/>
+                        </subant>
+                    </then>
+                    <else>
+                       <fail message='cannot find dependent library @{dir} to build'/>
+                    </else>
+                 </if>
+              </then>
+              <else>
+                  <echo message='@{dir} already up to date'/>
+              </else>
+          </if>
+      </sequential>
+   </macrodef>
+
+   <target name='mark.build.complete'>
+      <mark.build.complete/>
+   </target>
+
+   <target name='identify.build'>
+      <identify.build/>
+   </target>
+
+   <target name='dist' depends='rpm' description='Creates distributable'>
+      <echo message='${product.name} Distribution Package created.'/>
+   </target>
+
+   <target name='rpm'/>
+
+   <target name='clean'>
+      <if>
+         <available file="${dist.product}" type="dir" />
+         <then>
+            <delete dir="${dist.product}" failonerror='true'/>
+         </then>
+      </if>
+      <if>
+         <available file="${ivy.report.dir}" type="dir" />
+         <then>
+            <delete dir="${ivy.report.dir}" failonerror='true'/>
+         </then>
+      </if>
+      <if>
+         <available file="${build.done.flag}" type="file" />
+         <then>
+            <delete file="${build.done.flag}" failonerror='true'/>
+         </then>
+      </if>
+   </target>
+
+   <target name='clean-all' depends='clean'>
+      <ivy.clean.cache/>
+      <delete dir='${user.home}/.ivy2'/>
+   </target>
+
+    <macrodef name="build.sub.project">
+        <attribute name="dir"/>
+        <attribute name="target"/>
+        <sequential>
+            <subant target="@{target}">
+                <fileset dir="@{dir}" includes="build.xml"/>
+            </subant>
+        </sequential>
+    </macrodef>
+
+</project>

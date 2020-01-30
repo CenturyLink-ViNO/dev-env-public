@@ -1,0 +1,381 @@
+<?xml version="1.0"?>
+
+<project name="tasks.docker.xml">
+
+   <dirname property='tasks.docker.dir' file='${ant.file.tasks.docker.xml}'/>
+   
+   <macrodef name='docker.prepare.build'>
+      <attribute name='docker.file'/>
+      <sequential>
+         <mkdir dir='${docker.dir}'/>
+         <mkdir dir='${docker-prep.dir}'/>
+         <mkdir dir='${docker-dist.dir}'/>
+         <create.npmrc.file dest.dir='${docker-prep.dir}'/>
+         <copy todir='${docker-prep.dir}' overwrite='true'>
+            <fileset dir='${docker.dir}' includes='@{docker.file}'/>
+         </copy>
+         <if>
+            <equals arg1='${docker.use.local.repos}' arg2='true'/>
+            <then>
+               <docker.private.prepare docker.file='@{docker.file}'/>
+            </then>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.full.build'>
+      <attribute name='image.name'                default='${ant.project.name}'/>
+      <attribute name='image.version'             default='${version.major}.${version.minor}.${version.revision}'/>
+      <attribute name='docker-prep.dir'           default='${docker-prep.dir}'/>
+      <attribute name='docker.file'               default='Dockerfile'/>
+      <attribute name='destination.file'          default='${docker-dist.dir}/${ant.project.name}-${version.major}.${version.minor}.${version.revision}.tgz'/>
+      <attribute name='checkUpToDate'             default='${basedir}'/>
+      <attribute name='remove.image.after.export' default='true'/>
+      <sequential>
+         <local name="dockerImageUptodate"/>
+         <uptodate property="dockerImageUptodate" targetfile="@{destination.file}">
+            <srcfiles dir='@{checkUpToDate}' includes='**/*'/>
+         </uptodate>
+         <if>
+            <isset property="dockerImageUptodate"/>
+            <then>
+               <echo message='docker image up to date'/>
+            </then>
+            <else>
+               <echo message='docker image out of date - rebuilding'/>
+               <!-- docker.start.docker.machine/ -->
+               <docker.prepare.build docker.file='@{docker.file}'/>
+               <docker.remove.image image.name='@{image.name}' image.version='@{image.version}'/>
+               <docker.build.image  image.name='@{image.name}' image.version='@{image.version}' docker-prep.dir='@{docker-prep.dir}' docker.file='@{docker.file}'/>
+               <docker.export.image image.name='@{image.name}' image.version='@{image.version}' destination.file='@{destination.file}'/>
+               <if>
+                  <equals arg1='@{remove.image.after.export}' arg2='true'/>
+                  <then>
+                     <docker.remove.image image.name='@{image.name}' image.version='@{image.version}'/>
+                  </then>
+               </if>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.build'>
+      <sequential>
+         <fileset id='dockertFilesListRef' dir='${docker.dir}' includes='*.Dockerfile'/>
+         <property name='dockerFilesList' refid='dockertFilesListRef'/>
+         <docker.create.version.file />
+         <for list='${dockerFilesList}'  delimiter=';' param='dockerFile'>
+            <sequential>
+               <propertyregex input='@{dockerFile}' override='true' property='dockerName' global='true' regexp='.Dockerfile' replace=''/>
+               <docker.full.build image.name='${dockerName}'
+                          image.version='${version.major}.${version.minor}.${version.revision}.${version.fix}'
+                          docker-prep.dir='${docker-prep.dir}'
+                          docker.file='@{dockerFile}'
+                          destination.file='${docker-dist.dir}/${dockerName}-${version.major}.${version.minor}.${version.revision}.${version.fix}.tgz'
+                          checkUpToDate='${basedir}'>
+               </docker.full.build>
+            </sequential>
+         </for>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.remove.docker.registry'>
+      <sequential>
+         <echo message="checking docker registry existence status"/>
+         <check.if.executable.exists executable='docker'/>
+         <exec executable="cmd" osfamily="windows" failonerror="false" outputproperty="docker.registryExists">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="image"/>
+            <arg value="ls"/>
+         </exec>
+         <exec executable="docker" osfamily="unix" failonerror="false" outputproperty="docker.registryExists">
+            <arg value="image"/>
+            <arg value="ls"/>
+         </exec>
+         <propertyregex input="${docker.registryExists}" override="true" property="registryImageExists" global="true" regexp="registry" replace=" "/>
+         <if>
+            <isset property="registryImageExists"/>
+            <then>
+               <echo message="removing docker registry"/>
+               <exec executable="cmd" osfamily="windows">
+                  <arg value="/c"/>
+                  <arg value="docker"/>
+                  <arg value="container"/>
+                  <arg value="rm"/>
+                  <arg value="-v"/>
+                  <arg value="registry"/>
+               </exec>
+               <exec executable="docker" osfamily="unix">
+                  <arg value="container"/>
+                  <arg value="rm"/>
+                  <arg value="-v"/>
+                  <arg value="registry"/>
+               </exec>
+            </then>
+            <else>
+               <echo message="docker registry image does not exist"/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.stop.docker.registry'>
+      <sequential>
+         <echo message="checking docker registry running status"/>
+         <check.if.executable.exists executable='docker'/>
+         <exec executable="cmd" osfamily="windows" failonerror="false" outputproperty="docker.registryIsRunning">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="ps"/>
+         </exec>
+         <exec executable="docker" osfamily="unix" failonerror="false" outputproperty="docker.registryIsRunning">
+            <arg value="ps"/>
+         </exec>
+         <propertyregex input="${docker.registryIsRunning}" override="true" property="registryRunning" global="true" regexp="registry:2" replace=" "/>
+         <if>
+            <isset property="registryRunning"/>
+            <then>
+               <echo message="stopping docker registry"/>
+               <exec executable="cmd" osfamily="windows">
+                  <arg value="/c"/>
+                  <arg value="docker"/>
+                  <arg value="container"/>
+                  <arg value="stop"/>
+                  <arg value="registry"/>
+               </exec>
+               <exec executable="docker" osfamily="unix">
+                  <arg value="container"/>
+                  <arg value="stop"/>
+                  <arg value="registry"/>
+               </exec>
+            </then>
+            <else>
+               <echo message="docker registry not running"/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.start.docker.registry'>
+      <sequential>
+         <docker.stop.docker.registry/>
+         <docker.remove.docker.registry/>
+         <local name='registry-dir'/>
+         <local name='registry-location'/>
+         <property name='registry-location' location='${image.out.dir}/../../docker-registry'/>
+         <pathconvert property="registry-dir" dirsep="/">
+            <path location="${registry-location}"/>
+            <map from="c:" to=""/>
+            <map from="d:" to=""/>
+         </pathconvert>
+         <echo message="starting docker registry in ${registry-dir}"/>
+         <check.if.executable.exists executable='docker'/>
+         <exec executable="cmd" osfamily="windows" failonerror="true">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="run"/>
+            <arg value="-d"/>
+            <arg value="-p"/>
+            <arg value="5000:5000"/>
+            <arg value="--name"/>
+            <arg value="registry"/>
+            <arg value="-v"/>
+            <arg value="${registry-dir}:/var/lib/registry"/>
+            <arg value="registry:2"/>
+         </exec>
+         <exec executable="docker" osfamily="unix" failonerror="true">
+            <arg value="run"/>
+            <arg value="-d"/>
+            <arg value="-p"/>
+            <arg value="5000:5000"/>
+            <arg value="--name"/>
+            <arg value="registry"/>
+            <arg value="-v"/>
+            <arg value="${registry-dir}:/var/lib/registry"/>
+            <arg value="registry:2"/>
+         </exec>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.start.docker.machine'>
+      <sequential>
+         <echo message="starting docker machine"/>
+         <exec executable="cmd" osfamily="windows" failonerror="false" outputproperty="docker.machine.status">
+            <arg value="/c"/>
+            <arg value="docker-machine"/>
+            <arg value="status"/>
+         </exec>
+         <if>
+            <not>
+               <equals arg1='${docker.machine.status}' arg2='Running'/>
+            </not>
+            <then>
+               <exec executable="cmd" osfamily="windows" failonerror="false">
+                  <arg value="/c"/>
+                  <arg value="docker-machine"/>
+                  <arg value="start"/>
+               </exec>
+            </then>
+         </if>
+         <!-- docker.start.docker.registry/ -->
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.remove.image'>
+      <attribute name='image.name'/>
+      <attribute name='image.version'/>
+      <sequential>
+         <check.if.executable.exists executable='docker'/>
+         <local name='docker.lsOutput'/>
+         <local name='imageExists'/>
+         <exec executable="docker" osfamily="unix" failonerror="true" outputproperty="docker.lsOutput">
+            <arg value="image"/>
+            <arg value="ls"/>
+            <arg value="@{image.name}:@{image.version}"/>
+         </exec>
+         <exec executable="cmd" osfamily="windows" failonerror="true" outputproperty="docker.lsOutput">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="image"/>
+            <arg value="ls"/>
+            <arg value="@{image.name}:@{image.version}"/>
+         </exec>
+         <propertyregex input="${docker.lsOutput}" override="true" property="imageExists" global="true" regexp="@{image.name}" replace=" "/>
+         <if>
+            <isset property='imageExists'/>
+            <then>
+               <echo message='removing old docker image'/>
+               <exec dir="${docker-prep.dir}/.." executable="docker" osfamily="unix">
+                  <arg value="rmi"/>
+                  <arg value="-f"/>
+                  <arg value="@{image.name}:@{image.version}"/>
+               </exec>
+               <exec dir="${docker-prep.dir}/.." executable="cmd" osfamily="windows">
+                  <arg value="/c"/>
+                  <arg value="docker"/>
+                  <arg value="rmi"/>
+                  <arg value="-f"/>
+                  <arg value="@{image.name}:@{image.version}"/>
+               </exec>
+            </then>
+            <else>
+               <echo message='no image to remove'/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.build.image'>
+      <attribute name='image.name'/>
+      <attribute name='image.version'/>
+      <attribute name='docker.file'/>
+      <attribute name='docker-prep.dir'/>
+      <sequential>
+         <echo message='building new docker image from Dockerfile: @{docker.file}'/>
+         <check.if.executable.exists executable='docker'/>
+         <exec dir="@{docker-prep.dir}" executable="docker" osfamily="unix" failonerror="true">
+            <arg value="build"/>
+            <arg value="-f"/>
+            <arg value="@{docker.file}"/>
+            <arg value="-t"/>
+            <arg value="@{image.name}:@{image.version}"/>
+            <arg value="--force-rm"/>
+            <arg value="."/>
+         </exec>
+         <exec dir="@{docker-prep.dir}" executable="cmd" osfamily="windows" failonerror="true">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="build"/>
+            <arg value="-f"/>
+            <arg value="@{docker.file}"/>
+            <arg value="-t"/>
+            <arg value="@{image.name}:@{image.version}"/>
+            <arg value="."/>
+         </exec>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.export.image'>
+      <attribute name='image.name'/>
+      <attribute name='image.version'/>
+      <attribute name='destination.file'/>
+      <sequential>
+         <echo message="exporting docker image to @{destination.file}"/>
+         <check.if.executable.exists executable='docker'/>
+         <exec executable="docker" osfamily="unix" failonerror="true">
+            <arg value="save"/>
+            <arg value="@{image.name}:@{image.version}"/>
+            <arg value="-o"/>
+            <arg value="@{destination.file}"/>
+         </exec>
+         <exec executable="cmd" osfamily="windows" failonerror="true">
+            <arg value="/c"/>
+            <arg value="docker"/>
+            <arg value="save"/>
+            <arg value="@{image.name}:@{image.version}"/>
+            <arg value="-o"/>
+            <arg value="@{destination.file}"/>
+         </exec>
+         <chown owner='${user.name}' file='@{destination.file}'/>
+         <chmod perm='666' file="@{destination.file}"/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.create.version.file'>
+      <sequential>
+         <fileset id='dockertFilesListRef' dir='${docker.dir}' includes='*.Dockerfile'/>
+         <property name='dockerFilesList' refid='dockertFilesListRef'/>
+         <for list='${dockerFilesList}'  delimiter=';' param='dockerFile'>
+            <sequential>
+               <local name='dockerName'/>
+               <propertyregex input='@{dockerFile}' override='true' property='dockerName' global='true' regexp='.Dockerfile' replace=''/>
+               <propertyfile file="${docker-prep.dir}/${dockerName}-docker-${build.mode}.properties">
+                  <entry  key="name"     value="${dockerName}"/>
+                  <entry  key="major"    value="${version.major}"/>
+                  <entry  key="minor"    value="${version.minor}"/>
+                  <entry  key="revision" value="${version.revision}"/>
+                  <entry  key="fix"      value="${version.fix}"/>
+                  <entry  key="buildid"  value="${version.buildid}"/>
+               </propertyfile>
+            </sequential>
+         </for>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.dist'>
+      <sequential>
+         <fileset id='docker.images' dir='${docker-dist.dir}'>
+            <include name='*.tgz'/>
+         </fileset>
+         <fileset id="docker.extra.files" dir='${basedir}/install/docker'>
+            <include name='**/*'/>
+         </fileset>
+         <replace dir='${basedir}/install/docker' token='@DOCKER_VERSION@' value='${version.major}.${version.minor}.${version.revision}.${version.fix}'/>
+         <tar destfile='${bin.dir}/${abacus.product.name}-docker.${version.major}.${version.minor}.${version.revision}-${version.buildid}.tar.gz' compression='gzip'>
+            <tarfileset refid='docker.images'/>
+            <tarfileset refid='docker.extra.files'/>
+         </tar>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='docker.remove.dangling.images'>
+      <sequential>
+         <echo message='removing dangling docker images'/>
+         <check.if.executable.exists executable='docker'/>
+         <exec executable='docker' osfamily='unix' failonerror='true'>
+            <arg value='image'/>
+            <arg value='prune'/>
+            <arg value='-f'/>
+         </exec>
+         <exec executable='cmd' osfamily='windows' failonerror='true'>
+            <arg value='/c'/>
+            <arg value='docker'/>
+            <arg value='image'/>
+            <arg value='prune'/>
+            <arg value='-f'/>
+         </exec>
+      </sequential>
+   </macrodef>
+
+</project>

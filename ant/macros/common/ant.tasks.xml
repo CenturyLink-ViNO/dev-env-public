@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project name="abacus.common.ant.tasks.xml">
+
+   <dirname property="abacus.common.ant.tasks.dir" file="${ant.file.abacus.common.ant.tasks.xml}"/>
+
+   <import file='${abacus.common.ant.tasks.dir}/build.common.xml'/>
+   <import file='${abacus.common.ant.tasks.dir}/compile.xml'/>
+   <import file='${abacus.common.ant.tasks.dir}/build.new.xml'/>
+
+   <for param="addon">
+      <path>
+         <dirset dir="${abacus.common.ant.tasks.dir}" includes="*"/>
+      </path>
+      <sequential>
+         <import file="@{addon}/ant.tasks.xml"/>
+      </sequential>
+   </for>
+
+   <scriptdef language="javascript" name="capitalize">
+      <attribute name="string" />
+      <attribute name="to" />
+      var s = new String(attributes.get("string"));
+      project.setProperty(attributes.get("to"),s.toLowerCase().replace(/^.|\s\S/g,function(a) { return a.toUpperCase();}));
+   </scriptdef>
+
+   <macrodef name="create.version.info.file">
+      <sequential>
+         <capitalize string='${abacus.product.name}' to='title'/>
+         <mkdir dir='${image.dir}/${product.name}/etc'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='false' message='name=${title}${line.separator}'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='major=${version.major}${line.separator}'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='minor=${version.minor}${line.separator}'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='revision=${version.revision}${line.separator}'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='fix=${version.fix}${line.separator}${line.separator}'/>
+         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='buildid=${version.buildid}${line.separator}${line.separator}'/>
+         <var name='title' unset='true'/>
+      </sequential>
+   </macrodef>
+
+</project>

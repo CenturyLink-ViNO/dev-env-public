@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<project name="tasks.web-libs.xml">
+
+   <dirname property="tasks.web-libs.dir" file="${ant.file.tasks.web-libs.xml}"/>
+
+   <macrodef name='local.deploy.bootstrap'>
+      <attribute name='fork.dir'/>
+      <attribute name='out.dir'/>
+      <attribute name='src.dir'/>
+      <sequential>
+         <compile.less outputDir='@{out.dir}/css' inputDir="@{fork.dir}/less" fileName="bootstrap"/>
+         <compile.less outputDir='@{out.dir}/css' inputDir='@{src.dir}'  fileName="style"/>
+         <mkdir dir='@{out.dir}/fonts'/>
+         <copy todir='@{out.dir}/fonts'>
+            <fileset dir='@{fork.dir}/fonts'/>
+         </copy>
+         <copy todir='@{out.dir}/js'>
+            <fileset dir='@{fork.dir}/dist/js' includes='**/*.js'/>
+            <fileset dir='@{fork.dir}/js'   includes='**/*.js'>
+               <exclude name='tests/**'/>
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='local.deploy.abacus.js.lib'>
+      <attribute name='target.dir'/>
+      <attribute name='src.dir'/>
+      <sequential>
+         <copy todir='@{target.dir}'>
+            <fileset dir='@{src.dir}/src/web' includes='**/*.*'/>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='local.deploy.abacus.js.ots'>
+      <attribute name='target.dir'/>
+      <attribute name='src.dir'/>
+      <sequential>
+         <copy todir='@{target.dir}'>
+            <fileset dir='@{src.dir}/src/include' includes='**/*.*'/>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='local.deploy.jquery'>
+      <attribute name='target.dir'/>
+      <attribute name='src.dir'/>
+      <sequential>
+         <mkdir dir='@{target.dir}/jquery'/>
+         <copy todir='@{target.dir}/jquery'>
+            <fileset dir='@{src.dir}/dist'>
+               <include name='**/*.js'/>
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+</project>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<project name="tasks.xml.edit.xml">
+
+   <dirname property="tasks.xml.edit.dir" file="${ant.file.tasks.xml.edit.xml}"/>
+
+   <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask">
+      <classpath>
+         <fileset dir="${tasks.xml.edit.dir}">
+            <include name="*.jar"/>
+         </fileset>
+      </classpath>
+   </taskdef>
+
+</project>

@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+
+<project name="tasks.npm.xml">
+
+   <dirname property="tasks.npm.dir" file="${ant.file.tasks.npm.xml}"/>
+   <property name='npmrc.template.file' location='${tasks.npm.dir}/npmrc.template'/>
+
+   <macrodef name='get.local.node.js.package'>
+      <!-- now, can
+                        npm install -g /tmp/inline-debug.tar
+             rm /tmp/inline-debug.tar -->
+      <attribute name='fromdir' default='${nodelibs.tar.dir}'/>
+      <attribute name='todir'/>
+      <attribute name='name'/>
+      <sequential>
+         <copy file='@{fromdir}/@{name}.tar' tofile='@{todir}/@{name}.tar'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='create.node.js.package'>
+      <!-- now, can
+                        npm install -g /tmp/inline-debug.tar
+             rm /tmp/inline-debug.tar -->
+      <attribute name='srcdir'/>
+      <attribute name='outdir' default='${nodelibs.tar.dir}'/>
+      <attribute name='name'/>
+      <sequential>
+         <!-- does this need an out-of-date check ? -->
+         <compile.javascript.macro/>
+         <mkdir dir='@{outdir}'/>
+         <tar destfile='@{outdir}/@{name}.tar' basedir='@{srcdir}'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='create.npmrc.file'>
+      <attribute name='dest.dir'/>
+      <sequential>
+         <copy tofile='@{dest.dir}/npmrc' file='${npmrc.template.file}' overwrite='true'>
+            <filterset>
+               <filter token='REGISTRY1'    value="${npm.registry.1}"/>
+               <filter token='REGISTRY2'    value="${npm.registry.2}"/>
+            </filterset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='npm.build'>
+      <attribute name='src.dir'/>
+      <attribute name='dist.dir'/>
+      <sequential>
+         <mkdir dir='${tmp.npm.dir}'/>
+         <create.npmrc.file dest.dir='${tmp.npm.dir}'/>
+         <copy todir='@{dist.dir}'>
+            <fileset dir='@{src.dir}'/>
+         </copy>
+         <exec executable='cmd' dir='@{dist.dir}' failonerror='true' osfamily='windows'>
+            <arg value='/c'/>
+            <arg value='npm'/>
+            <arg value='install'/>
+            <arg value='--userconfig=${tmp.npm.dir}/npmrc'/>
+         </exec>
+         <exec executable='npm' dir='@{dist.dir}' failonerror='true' osfamily='unix'>
+            <arg value='install'/>
+            <arg value='--userconfig=${tmp.npm.dir}/npmrc'/>
+         </exec>
+      </sequential>
+   </macrodef>
+   
+   <macrodef name='tsc.build'>
+      <attribute name='src.dir'/>
+      <attribute name='dist.dir'/>
+      <sequential>
+         <exec executable='cmd' dir='@{src.dir}' failonerror='true' osfamily='windows'>
+            <arg value='/c'/>
+            <arg value='tsc'/>
+            <arg value='-b'/>
+            <arg value='tsconfig.json'/>
+         </exec>
+         <exec executable='tsc' dir='@{src.dir}' failonerror='true' osfamily='unix'>
+            <arg value='-b'/>
+            <arg value='tsconfig.json'/>
+         </exec>
+         <copy todir='@{dist.dir}'>
+            <fileset dir='@{src.dir}'>
+               <include name='ormconfig.json'/>
+               <include name='package.json'/>
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+</project>

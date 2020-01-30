@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<project name="tasks.user.properties.xml">
+
+   <dirname property="tasks.user.properties.dir" file="${ant.file.tasks.user.properties.xml}"/>
+   <!-- echo message="loading local overides using ${ant.file.tasks.user.properties.xml}"/ -->
+
+   <!-- pull in the host information -->
+   <hostinfo/>
+   <property name="hostinfo.ip.address"  value="${ADDR4}"/>
+   <property name="hostinfo.ip4.address" value="${ADDR4}"/>
+   <property name="hostinfo.ip6.address" value="${ADDR6}"/>
+   <property name="hostinfo.name"        value="${NAME}"/>
+   <property name="hostinfo.domain"      value="${DOMAIN}"/>
+   <var name="ADDR4" unset="true"/>
+   <var name="ADDR6" unset="true"/>
+   <var name="NAME" unset="true"/>
+   <var name="DOMAIN" unset="true"/>
+
+   <macrodef name='user.settings.override'>
+      <attribute name="file"/>
+      <sequential>
+         <pathconvert property="user.override.file">
+            <path location="${user.home}/ant/@{file}"/>
+         </pathconvert>
+         <if>
+            <available file="${user.override.file}"/>
+            <then>
+               <if>
+                  <and>
+                     <isset property='master.build'/>
+                     <equals arg1='${master.build}' arg2='true'/>
+                  </and>
+                  <then>
+                     <echo message="reading properties from [${user.override.file}]"/>
+                  </then>
+               </if>
+               <if>
+                  <matches pattern="xml$" string="@{file}"/>
+                  <then>
+                     <import file="${user.override.file}"/>
+                  </then>
+                  <else>
+                     <loadproperties srcFile="${user.override.file}"/>
+                  </else>
+               </if>
+            </then>
+            <else>
+               <if>
+                  <and>
+                     <isset property='master.build'/>
+                     <equals arg1='${master.build}' arg2='true'/>
+                  </and>
+                  <then>
+                     <echo message="[${user.override.file}] is not available, skipping"/>
+                  </then>
+               </if>
+            </else>
+         </if>
+         <var unset='true' name='user.override.file'/>
+      </sequential>
+   </macrodef>
+
+   <user.settings.override file='${ant.project.name}.xml'/>
+   <user.settings.override file='${ant.project.name}.properties'/>
+   <user.settings.override file='ant.global.overrides.xml'/>
+   <user.settings.override file='ant.global.overrides.properties'/>
+
+</project>

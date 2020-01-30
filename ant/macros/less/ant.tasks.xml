@@ -1,0 +1,40 @@
+<?xml version='1.0'?>
+
+<project name='tasks.less.xml'>
+
+   <dirname property='tasks.less.dir' file='${ant.file.tasks.less.xml}'/>
+   <property name='windows.less' value='%appdata%\npm\lessc'/>
+
+   <macrodef name='compile.less'>
+      <attribute name='inputDir' default='${css.src.dir}'/>
+      <attribute name='fileName'/>
+      <attribute name='outputDir' default='${web.css.dir}'/>
+      <sequential>
+         <local name='css-up-to-date'/>
+         <uptodate property='css-up-to-date' targetfile='@{outputDir}/@{fileName}.css'>
+            <srcfiles dir='@{inputDir}'/>
+         </uptodate>
+         <if>
+            <not>
+               <isset property='css-up-to-date'/>
+            </not>
+            <then>
+               <echo message='Converting LESS to CSS...'/>
+               <property environment='lessEnv'/>
+               <check.if.executable.exists executable='lessc'/>
+               <mkdir dir='@{outputDir}'/>
+               <exec executable='lessc' osfamily='unix' failonerror='true' output='@{outputDir}/@{fileName}.css'>
+                  <arg value='@{inputDir}/@{fileName}.less'/>
+               </exec>
+               <exec executable='cmd.exe' osfamily='windows' failonerror='true' output='@{outputDir}/@{fileName}.css'>
+                  <arg value='/k'/>
+                  <arg value='${windows.less}'/>
+                  <arg value='@{inputDir}/@{fileName}.less'/>
+               </exec>
+               <echo>compile.less - generated @{outputDir}/@{fileName}.css</echo>
+            </then>
+         </if>
+      </sequential>
+   </macrodef>
+
+</project>

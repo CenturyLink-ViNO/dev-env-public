@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+
+<project name="tasks.esLint.xml">
+
+   <dirname property="tasks.esLint.dir"    file="${ant.file.tasks.esLint.xml}"/>
+   <property name = "tasks.eslint.checkstyle.xsl" value = "${tasks.esLint.dir}/ESLintProcessCheckstyleLog.xsl"/>
+
+   <macrodef name='verify.es.lint'>
+      <sequential>
+         <check.if.executable.exists executable='eslint'/>
+         <local name='actualEsLintVersion'/>
+         <local name='expectedEsLintVersion'/>
+         <property name='expectedEsLintVersion' value='v5.14.1'/>
+         <exec executable="cmd" outputproperty='actualEsLintVersion' failonerror="true" osfamily="windows">
+            <arg value="/c"/>
+            <arg value="eslint"/>
+            <arg value="-v"/>
+         </exec>
+         <exec executable="eslint" outputproperty='actualEsLintVersion' failonerror="true" osfamily="unix">
+            <arg value="-v"/>
+         </exec>
+         <fail message="Found eslint version ${actualEsLintVersion} but expected ${expectedEsLintVersion}">
+            <condition>
+               <not>
+                  <equals arg1="${actualEsLintVersion}" arg2="${expectedEsLintVersion}"/>
+               </not>
+            </condition>
+         </fail>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="eslint">
+      <attribute name="src.dir"/>
+      <attribute name="project.name"   default='${ant.project.name}'/>
+      <attribute name="test"           default='main'/>
+      <attribute name="failonerror"    default='false'/>
+      <attribute name="out.dir"        default='${tmp.dir}'/>
+      <attribute name="style"          default='checkstyle'/>
+      <attribute name='sourceType'     default='node'/>
+      <attribute name='ignore.pattern' default=' '/>
+      <attribute name='file.extension' default='.js'/>
+      <sequential>
+         <local name="eslintRcFile"/>
+         <property name="eslintRcFile" value='${tasks.esLint.dir}/eslintrc.@{sourceType}.js'/>
+
+         <local name="out.dir"/>
+         <property name="out.dir" value="@{out.dir}/analysis/@{test}/@{sourceType}/ESLintCheckstyle"/>
+
+         <local name="esLintUptodate"/>
+         <uptodate property="esLintUptodate" targetfile="${out.dir}/ESLint_success.@{sourceType}.xml">
+            <srcfiles dir="@{src.dir}" includes="**/*@{file.extension}"/>
+         </uptodate>
+         <if>
+            <not>
+               <isset property="esLintUptodate"/>
+            </not>
+            <then>
+               <mkdir dir="${out.dir}"/>
+               <echo message='scanning files in @{src.dir} using rules file: ${eslintRcFile}'/>
+               <exec executable="cmd" osfamily="windows" failonerror="false">
+                  <arg value="/c"/>
+                  <arg value="eslint"/>
+                  <arg value="-c"/>
+                  <arg value="${eslintRcFile}"/>
+                  <arg value="-f"/>
+                  <arg value="@{style}"/>
+                  <arg value="--ext"/>
+                  <arg value="@{file.extension}"/>
+                  <arg value="-o"/>
+                  <arg value="${out.dir}/ESLint_checkstyle_messages.xml"/>
+                  <arg value="--ignore-pattern"/>
+                  <arg value="@{ignore.pattern}"/>
+                  <arg value="@{src.dir}"/>
+               </exec>
+               <exec executable="eslint" failonerror="false" osfamily="unix">
+                  <arg value="-c"/>
+                  <arg value="${eslintRcFile}"/>
+                  <arg value="-f"/>
+                  <arg value="@{style}"/>
+                  <arg value="--ext"/>
+                  <arg value="@{file.extension}"/>
+                  <arg value="-o"/>
+                  <arg value="${out.dir}/ESLint_checkstyle_messages.xml"/>
+                  <arg value="--ignore-pattern"/>
+                  <arg value="@{ignore.pattern}"/>
+                  <arg value="@{src.dir}"/>
+               </exec>
+            </then>
+         </if>
+         <var unset="true" name="esLintUptodate"/>
+
+         <xslt in="${out.dir}/ESLint_checkstyle_messages.xml" style="${tasks.eslint.checkstyle.xsl}" out="${out.dir}/ESLint_checkstyle_summary.txt">
+            <param name='projectName' expression="@{project.name}"/>
+            <param name='precision' expression="summary"/>
+         </xslt>
+
+         <xslt in="${out.dir}/ESLint_checkstyle_messages.xml" style="${tasks.eslint.checkstyle.xsl}" out="${out.dir}/ESLint_checkstyle_terse_summary.txt">
+            <param name='projectName' expression="@{project.name}"/>
+            <param name='precision' expression="terse"/>
+         </xslt>
+
+         <xslt in="${out.dir}/ESLint_checkstyle_messages.xml" style="${tasks.eslint.checkstyle.xsl}" out="${out.dir}/ESLint_checkstyle_type_summary.txt">
+            <param name='projectName' expression="@{project.name}"/>
+            <param name='precision' expression="detail"/>
+         </xslt>
+
+         <xslt in="${out.dir}/ESLint_checkstyle_messages.xml" style="${tasks.eslint.checkstyle.xsl}" out="${out.dir}/ESLint_checkstyle_counts.properties">
+            <param name='projectName' expression="@{project.name}"/>
+            <param name='precision' expression="counts"/>
+         </xslt>
+
+         <local name="csLen"/>
+         <length property="csLen" file="${out.dir}/ESLint_checkstyle_summary.txt"/>
+         <if>
+            <not>
+               <equals arg1='${csLen}' arg2='0'/>
+            </not>
+            <then>
+               <concat>
+                  <fileset dir="${out.dir}" includes="ESLint_checkstyle_summary.txt"/>
+               </concat>
+            </then>
+         </if>
+
+         <if>
+            <available file='${global.allowed.checkstyle.violations.file}'/>
+            <then>
+               <echo message='loading acceptable limits from ${global.allowed.checkstyle.violations.file}'/>
+               <property file='${global.allowed.checkstyle.violations.file}'/>
+            </then>
+            <else>
+               <echo message='could not find acceptable limits file ${global.allowed.checkstyle.violations.file}'/>
+            </else>
+         </if>
+         <if>
+            <available file='${allowed.checkstyle.violations.file}'/>
+            <then>
+               <echo message='loading acceptable limits from ${allowed.checkstyle.violations.file}'/>
+               <property file='${allowed.checkstyle.violations.file}'/>
+            </then>
+            <else>
+               <echo message='could not find acceptable limits file ${allowed.checkstyle.violations.file}'/>
+            </else>
+         </if>
+         <if>
+            <available file='${out.dir}/ESLint_checkstyle_counts.properties'/>
+            <then>
+               <compare.checkstyle.results project.name="@{project.name}" actual="${out.dir}/ESLint_checkstyle_counts.properties"/>
+            </then>
+         </if>
+         <touch file="${out.dir}/ESLint_success.@{sourceType}.xml"/>
+      </sequential>
+   </macrodef>
+
+   <verify.es.lint/>
+
+</project>

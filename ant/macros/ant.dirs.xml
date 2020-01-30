@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<project name="abacus-properties-xml">
+
+   <!-- these are likely to be common to many projects -->
+
+   <property name='product.name' value='${ant.project.name}'/>
+
+   <property name="source.dir"               location="${basedir}/src"/>
+   <property name="java.main.src.dir"        location="${source.dir}/main/java"/>
+   <property name="java.test.src.dir"        location="${source.dir}/test/java"/>
+   <property name="java.test.unit.dir"       location="${source.dir}/test/unit/java"/>
+   <property name="java.test.functional.dir" location="${source.dir}/test/functional/java"/>
+   <property name="java.test.system.dir"     location="${source.dir}/test/system/java"/>
+   <property name="py.main.src.dir"          location="${source.dir}/main/python"/>
+   <property name="py.test.dir"              location="${source.dir}/test/unit/python"/>
+   <property name="py.test.unit.dir"         location="${source.dir}/test/unit/python"/>
+   <property name="py.test.functional.dir"   location="${source.dir}/test/functional/python"/>
+   <property name="py.test.system.dir"       location="${source.dir}/test/system/python"/>
+   <property name="css.src.dir"              location="${source.dir}/main/less"/>
+
+   <property name="bnd.main.src.dir"         location="${source.dir}/main/bnd"/>
+
+   <property name="jar.name"                 value="${product.name}.jar"/>
+   <property name="war.name"                 value="${ant.project.name}.war"/>
+
+   <property name="dist.root"                location="${tree.top}/build"/>
+   <property name="ivy.report.dir"           location="${dist.root}/reports/ivy/${product.name}"/>
+   <property name="rpm.dir"                  location="${dist.root}/rpm"/>
+   <property name="bin.dir"                  location="${dist.root}/bin"/>
+   <property name="win.zip.dir"              location="${dist.root}/zip"/>
+   <property name="nodelibs.tar.dir"         location="${dist.root}/npm.tars"/>
+   <property name="dist.product"             location="${dist.root}/project/${product.name}"/>
+
+   <property name="dist.dir"                 location="${dist.product}/${build.mode}"/>
+   <property name="maven.build.dir"          location="${dist.dir}/mvn"/>
+
+   <property name="docker.dir"               location="${basedir}/docker"/>
+   <property name="docker-prep.dir"          location="${dist.dir}/docker"/>
+   <property name="docker-dist.dir"          location="${dist.root}/docker"/>
+
+   <property name="image.dir"                location="${dist.dir}/image"/>
+   <property name="rpm.prep.dir"             location="${image.dir}"/>
+   <property name="web.dir"                  location="${image.dir}/${product.name}/web"/>
+   <property name="yang.dir"                 location="${basedir}/image/os/usr/share/abacus/modules"/>
+   <property name="web.css.dir"              location="${web.dir}/css"/>
+   <property name="web.js.dir"               location="${web.dir}/js"/>
+   <property name="web.ots.js.dir"           location="${web.dir}/ots/js"/>
+   <property name="tmp.dir"                  location="${dist.dir}/tmp"/>
+   <property name="tmp.npm.dir"              location="${dist.dir}/tmp/npm"/>
+   <property name="tmp.npm.build.dir"        location="${dist.dir}/tmp/npm/npm.build"/>
+   <property name="tmp.py.dir"               location="${dist.dir}/tmp/py"/>
+   <property name="tmp.pypi.dir"             location="${dist.dir}/tmp/pypi"/>
+   <property name="test.results.dir"         location="${dist.dir}/tmp/test.results"/>
+   <property name='flag.dir'                 location='${tmp.dir}/flag'/>
+   <property name="jar.dir"                  location="${dist.dir}/jar"/>
+   <property name="lib.dir"                  location="${dist.dir}/lib"/>
+   <property name="war.dir"                  location="${dist.dir}/war"/>
+   <property name="war.prep.dir"             location="${dist.dir}/war.prep"/>
+   
+   <property name="class.dir"                location="${dist.dir}/classes"/>
+   <property name="class.test.dir"           location="${dist.dir}/classes.test"/>
+   <property name="class.py.dir"             location="${image.dir}/${product.name}/py"/>
+
+   <property name="doc.root.dir"             location="${web.dir}"/>
+   <property name="doc.dir"                  location="${doc.root.dir}/doc"/>
+   <property name="doc.rev.dir"              location="${doc.dir}/review"/>
+   <property name="doc.api.dir"              location="${doc.dir}/api"/>
+   <property name="doc.ws.dir"               location="${doc.dir}/ws"/>
+   <property name="doc.dt.dir"               location="${doc.dir}/type"/>
+
+
+   <property name="deploy.root.dir"          location="${dist.dir}/deploy"/>
+   <property name="deploy.tomcat.dir"        location="${deploy.root.dir}"/>
+   <property name="deploy.product.dir"       location="${deploy.root.dir}/${product.name}"/>
+   <property name="deploy.pg.data.dir"       location="${deploy.product.dir}/data/postgres"/>
+
+   <property name="usr.download.dir"         location="${user.home}/ant.cache/download/${product.name}"/>
+   <property name="usr.extract.dir"          location="${user.home}/ant.cache/extracted/${product.name}"/>
+
+</project>

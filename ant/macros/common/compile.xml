@@ -1,0 +1,541 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<project name='compile' xmlns:ivy='antlib:org.apache.ivy.ant' xmlns:bnd='bnd'>
+
+   <target name='compile' depends='compile.javascript, compile.python, compile.java, ws.docs, check.json'/>
+
+   <property name='image.out.dir' location='${image.dir}/${product.name}'/>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='ivy.path'/> <!-- intended for override -->
+
+   <!-- ======================================================================================================== -->
+
+   <target name='check.json'>
+      <jq.verify/>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='ws.docs'>
+      <if>
+         <available type='file' file='image/web.service.definition.xml'/>
+         <then>
+            <if>
+               <available type='dir' file='${java.main.src.dir}'/>
+               <then>
+                  <copy file='image/web.service.definition.xml'
+                        tofile='${image.out.dir}/os/opt/abacus/abacus-ws-doc/${product.name}.web.service.definition.xml'/>
+                  <path id='ws.doc.cp'>
+                     <fileset dir='${jar.dir}' includes='**/*.jar'/>
+                  </path>
+                  <javadoc.ws     src.dir='${java.main.src.dir}' classpathref='ws.doc.cp' dst.dir='${doc.ws.dir}' tmp.dir='${tmp.dir}/wsdoc.tmp'/>
+                  <!--
+                  <javadoc.api    src.dir='${java.main.src.dir}' classpathref='ws.doc.cp' dst.dir='${doc.dir}/api'/>
+                  <javadoc.review src.dir='${java.main.src.dir}' classpathref='ws.doc.cp' dst.dir='${doc.dir}/review' />
+                  -->
+               </then>
+               <else>
+                  <echo message='ERROR: Web Service declared, but no source directory found'/>
+               </else>
+            </if>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='compile.php' description='Check PHP for syntax issues'>
+      <if>
+         <available file='image/web/' type='dir'/>
+         <then>
+            <echo message='${product.name} - Checking PHP syntax.'/>
+            <php.compile src.dir='image/web'/>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='compile.javascript' description='Check JavaScript for style and syntax issues'>
+      <compile.javascript.macro/>
+   </target>
+
+   <macrodef name='compile.javascript.macro' description='Check JavaScript for style and syntax issues'>
+      <sequential>
+         <if>
+            <resourcecount when="greater" count="0">
+               <fileset dir=".">
+                  <include name='**/*.js'/>
+                  <exclude name="**/web/**/*.js"/>                          <!-- ui code -->
+                  <exclude name='**/settings.js'/>                             <!-- node red settings -->
+                  <exclude name='**/ots/**/*.js'/>                             <!-- 3rd party software -->
+                  <exclude name="src/bootstrap/**/*.js"/>                      <!-- 3rd party software -->
+                  <exclude name='image/kibana.plugins/**/*.js'/>               <!-- 3rd party software -->
+                  <exclude name="image/etc/files/kibana-skinning/**/*.js"/>    <!-- 3rd party software -->
+                  <exclude name="image/etc/files/skinning/abacusBranding.js"/> <!-- 3rd party software -->
+                  <exclude name="image/etc/files/tsvb/**/*.js"/>               <!-- 3rd party software -->
+               </fileset>
+            </resourcecount>
+            <then>
+               <echo message='${product.name} - Checking module JavaScript style and syntax.'/>
+               <mkdir dir='${tmp.dir}/jscompile.node'/>
+               <copy todir='${tmp.dir}/jscompile.node'>
+                  <fileset dir='.'>
+                     <include name='**/*.js'/>
+                     <exclude name="**/web/**/*.js"/>                          <!-- ui code -->
+                     <exclude name='**/settings.js'/>                             <!-- node red settings -->
+                     <exclude name='**/ots/**/*.js'/>                             <!-- 3rd party software -->
+                     <exclude name="src/bootstrap/**/*.js"/>                      <!-- 3rd party software -->
+                     <exclude name='image/kibana.plugins/**/*.js'/>               <!-- 3rd party software -->
+                     <exclude name="image/etc/files/kibana-skinning/**/*.js"/>    <!-- 3rd party software -->
+                     <exclude name="image/etc/files/skinning/abacusBranding.js"/> <!-- 3rd party software -->
+                     <exclude name="image/etc/files/tsvb/**/*.js"/>               <!-- 3rd party software -->
+                  </fileset>
+               </copy>
+               <javascript.build src.dir='${tmp.dir}/jscompile.node'
+                                 out.dir='${tmp.dir}'
+                                 failonerror='true'
+                                 sourceType='node'/>
+            </then>
+         </if>
+         <if>
+            <and>
+               <resourcecount when="greater" count="0">
+                  <fileset dir='.'>
+                     <include name='**/web/**/*.js'/>
+                     <exclude name='**/settings.js'/>                <!-- node red settings -->
+                     <exclude name='**/ots/**/*.js'/>                <!-- 3rd party software -->
+                     <exclude name="**/bootstrap/**/*.js"/>          <!-- 3rd party software -->
+                  </fileset>
+               </resourcecount>
+            </and>
+            <then>
+               <echo message='${product.name} - Checking web JavaScript style and syntax.'/>
+               <mkdir dir='${tmp.dir}/jscompile.browser.${build.mode}'/>
+               <copy todir='${tmp.dir}/jscompile.browser.${build.mode}'>
+                  <fileset dir='.'>
+                     <include name='**/web/**/*.js'/>
+                     <exclude name='**/settings.js'/>                <!-- node red settings -->
+                     <exclude name='**/ots/**/*.js'/>                <!-- 3rd party software -->
+                     <exclude name="**/bootstrap/**/*.js"/>          <!-- 3rd party software -->
+                  </fileset>
+               </copy>
+               <javascript.build src.dir='${tmp.dir}/jscompile.browser.${build.mode}'
+                                 out.dir='${tmp.dir}/browser.${build.mode}'
+                                 failonerror='true'
+                                 sourceType='browser.${build.mode}'/>
+
+               <mkdir dir='${image.out.dir}'/>
+               <copy todir='${image.out.dir}'>
+                  <fileset dir='image'>
+                     <include name='**/*.js'/>
+                  </fileset>
+               </copy>
+            </then>
+         </if>
+         <if>
+            <and>
+               <resourcecount when="greater" count="0">
+                  <fileset dir='.'>
+                     <include name='**/*.ts'/>
+                  </fileset>
+               </resourcecount>
+            </and>
+            <then>
+               <echo message='${product.name} - Checking TypeScript style and syntax.'/>
+               <mkdir dir='${tmp.dir}/jscompile.typescript'/>
+               <copy todir='${tmp.dir}/jscompile.typescript'>
+                  <fileset dir='.'>
+                     <include name='**/*.ts'/>
+                  </fileset>
+               </copy>
+               <javascript.build src.dir='${tmp.dir}/jscompile.typescript'
+                                 out.dir='${tmp.dir}'
+                                 failonerror='true'
+                                 sourceType='typescript'
+                                 file.extension='.ts'/>
+               <mkdir dir='${image.out.dir}'/>
+               <copy todir='${image.out.dir}'>
+                  <fileset dir='image'>
+                     <include name='**/*.ts'/>
+                  </fileset>
+               </copy>
+            </then>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='compile.python' description='Compiles Python source code'>
+
+      <if>
+         <available file='${source.dir}/main/python' type='dir'/>
+         <then>
+            <python.install.packages />
+
+            <python.compile src.dir='${source.dir}'
+                            out.dir='${class.py.dir}'
+                            project.name='${ant.project.name}'
+                            tmp.dir='${flag.dir}'/>
+         </then>
+      </if>
+
+      <if>
+         <available file='${py.test.unit.dir}' type='dir'/>
+         <then>
+            <python.coverage src.dir='${py.main.src.dir}'
+                             test.dir='${py.test.unit.dir}'/>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='compile.ivy-retrieve'>
+      <if>
+         <not>
+            <isset property='ivy.pattern.override'/>
+         </not>
+         <then>
+            <property name='ivy.pattern.override' value='${lib.dir}/[artifact]-[revision].[ext]'/>
+         </then>
+      </if>
+      <echo message='${product.name} - Retrieving java libraries from IVY.'/>
+      <ivy.retrieve dir='${lib.dir}' pattern='${ivy.pattern.override}' type='jar, bundle'/>
+   </target>
+
+   <!-- ======================================================================================================== -->
+   <target name='compile.java' depends='ivy.path' description='Compiles Java source code'>
+      <property name='java.compile.override.fail.on.optional' value='true'/>
+      <property name='java.compile.override.promote.warnings' value='true'/>
+      <if>
+         <available file='${java.main.src.dir}' type='dir'/>
+         <then>
+            <mkdir dir='${jar.dir}'/>
+            <local name='compile.java.classpath'/>
+            <if>
+               <available file='../extlib' type='dir'/>
+               <then>
+                  <path id='compile.java.classpath'>
+                     <fileset dir='${jar.dir}' includes='**/*.jar' />
+                     <fileset dir='../extlib' includes='**/*.jar' />
+                  </path>
+               </then>
+               <else>
+                  <if>
+                     <available file='extlib' type='dir'/>
+                     <then>
+                        <path id='compile.java.classpath'>
+                           <fileset dir='${jar.dir}' includes='**/*.jar' />
+                           <fileset dir='extlib' includes='**/*.jar' />
+                        </path>
+                     </then>
+                     <else>
+                        <path id='compile.java.classpath'>
+                           <fileset dir='${jar.dir}' includes='**/*.jar' />
+                        </path>
+                     </else>
+                  </if>
+               </else>
+            </if>
+            <java.build src.dir='${java.main.src.dir}'
+                        tmp.dir='${tmp.dir}'
+                        project.name='${product.name}'
+                        class.dir='${class.dir}'
+                        classpathref='compile.java.classpath'
+                        promoteWarnings='${java.compile.override.promote.warnings}'/>
+         </then>
+         <!--
+         <else>
+            <echo message='no java source directory found ${java.main.src.dir}'/>
+         </else>
+         -->
+      </if>
+      <if>
+         <available file='${java.test.unit.dir}' type='dir'/>
+         <then>
+            <mkdir dir='${jar.dir}'/>
+            <local name='compile.java.classpath'/>
+            <if>
+               <available file='../extlib' type='dir'/>
+               <then>
+                  <path id='compile.java.classpath'>
+                     <dirset dir='${class.dir}'/>
+                     <fileset dir='${jar.dir}' includes='**/*.jar' />
+                     <fileset dir='../extlib' includes='**/*.jar' />
+                  </path>
+               </then>
+               <else>
+                  <if>
+                     <available file='extlib' type='dir'/>
+                     <then>
+                        <path id='compile.java.classpath'>
+                           <dirset dir='${class.dir}'/>
+                           <fileset dir='${jar.dir}' includes='**/*.jar' />
+                           <fileset dir='extlib' includes='**/*.jar' />
+                        </path>
+                     </then>
+                     <else>
+                        <path id='compile.java.classpath'>
+                           <dirset dir='${class.dir}'/>
+                           <fileset dir='${jar.dir}' includes='**/*.jar' />
+                        </path>
+                     </else>
+                  </if>
+               </else>
+            </if>
+            <java.build src.dir='${java.test.unit.dir}'
+                        tmp.dir='${tmp.dir}/test'
+                        project.name='${product.name}'
+                        class.dir='${class.test.dir}'
+                        classpathref='compile.java.classpath'
+                        promoteWarnings='${java.compile.override.promote.warnings}'/>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='build.jar' depends='compile.java'>
+      <if>
+         <available file='${class.dir}' type='dir'/>
+         <then>
+            <if>
+               <isset property="make.skinny.bundle"/>
+               <then>
+                  <path id='bundle.class.path'>
+                     <fileset dir='${jar.dir}'>
+                        <include name='**/${jar.name}'/>
+                     </fileset>
+                  </path>
+                  <property name="bnd.build.classpath" value="bundle.class.path"/>
+               </then>
+               <else>
+                  <property name="bnd.build.classpath" value="building.class.path"/>
+               </else>
+            </if>
+            <if>
+               <available file='${bnd.main.src.dir}' type='dir'/>
+               <then>
+                  <echo message="Build from top Found BND directory: ${bnd.main.src.dir}"/>
+                  <!-- Find the .bnd file.  There should only be 1 -->
+                  <pathconvert property='bnd.main.src.file' pathsep=','>
+                     <fileset dir='${bnd.main.src.dir}'>
+                        <include name='*.bnd'/>
+                     </fileset>
+                  </pathconvert>
+                  <echo message="Found BND file: ${bnd.main.src.file} creating bundle: ${jar.dir}/${jar.name} from ${class.dir}"/>
+                  <bnd:bnd failok='false'
+                           eclipse='false'
+                           files='${bnd.main.src.file}'
+                           output='${tmp.dir}/${jar.name}'
+                           classpathref='${bnd.build.classpath}'
+                           />
+                  <copy file='${tmp.dir}/${jar.name}' tofile='${jar.dir}/${jar.name}' force='true' overwrite='true'/>
+               </then>
+               <else>
+                  <!-- echo message="Build from top No BND directory '${bnd.main.src.dir}' regular .jar file building"/ -->
+                  <jar basedir='${class.dir}' destfile='${jar.dir}/${jar.name}'/>
+               </else>
+            </if>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='jar' depends='build.jar'>
+      <if>
+         <and>
+            <available file='${jar.dir}/${jar.name}'/>
+            <not>
+               <isset property='java.compile.override.skip.findbugs'/>
+            </not>
+         </and>
+         <then>
+            <java.findbugs out.dir='${tmp.dir}'
+                           project.name='${product.name}'
+                           src.path='${java.main.src.dir}'
+                           test.jar='${jar.dir}/${jar.name}'>
+               <classpath>
+                  <fileset dir='${jar.dir}' includes='**/*.jar'/>
+               </classpath>
+           </java.findbugs>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='dist.parts' depends='dist.jars, dist.image, dist.rpm-prep'/>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='dist.jars' description='Prepares jar files for distribution' depends='jar'>
+      <if>
+         <available file='${jar.dir}' type='dir'/>
+         <then>
+            <mkdir dir='${image.out.dir}/lib'/>
+            <copy todir='${image.out.dir}/lib' flatten='true'>
+               <fileset dir='${jar.dir}' includes='**/*.jar' excludes='**/*sources.jar,**/*javadoc.jar'/>     <!-- Copy the runtime jar files except javadoc and sources -->
+            </copy>
+            <if>
+               <available file='${jar.dir}/${product.name}.jar'/>
+               <then>
+                  <mkdir dir='${image.out.dir}/bin'/>
+                  <copy todir='${image.out.dir}/bin'>
+                     <fileset dir='${jar.dir}'>
+                        <include name='${product.name}.jar'/>
+                     </fileset>
+                  </copy>
+               </then>
+            </if>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='dist.image' description='Prepare OS/Filesystem files for distribution'>
+      <if>
+         <available file='image' type='dir'/>
+         <then>
+            <echo message='${product.name} - Preparing for distribution'/>
+            <mkdir dir='${image.out.dir}'/>
+            <copy todir='${image.out.dir}'>
+               <fileset dir='image'>
+                  <include name='**/*'/>
+               </fileset>
+            </copy>
+            <fixcrlf srcdir='${image.out.dir}' includes='**/*.sql'        eol='lf' eof='remove'/>
+            <fixcrlf srcdir='${image.out.dir}' includes='**/*.sh'         eol='lf' eof='remove'/>
+            <fixcrlf srcdir='${image.out.dir}' includes='**/*.properties' eol='lf' eof='remove'/>
+            <chmod dir='${image.out.dir}' includes='**/*.sh' perm='ugo+rx'/>
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <target name='dist.rpm-prep'>
+      <if>
+         <available file='rpm' type='dir'/>
+         <then>
+            <mkdir dir='${tmp.dir}/rpm.scripts'/>
+            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postInstall.sh'/>
+            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postUninstall.sh'/>
+            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preInstall.sh'/>
+            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preUninstall.sh'/>
+            <fixcrlf srcdir='${tmp.dir}/rpm.scripts' includes='**/*.sh' eol='lf' eof='remove' />
+         </then>
+      </if>
+   </target>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="abacus.rpm.create">
+      <attribute name='summary'/>
+      <attribute name='name'     default='${product.name}'/>
+      <element name='additionalRpmElements' optional='true'/>
+      <sequential>
+         <create.rpm.version.info.file/>
+         <rpm.create name = '@{name}'
+                     summary = '@{summary}'
+                     buildid = '${version.buildid}'
+                     postInstallScript   = '${tmp.dir}/rpm.scripts/postInstall.sh'
+                     postUnInstallScript = '${tmp.dir}/rpm.scripts/postUninstall.sh'
+                     preUnInstallScript  = '${tmp.dir}/rpm.scripts/preUninstall.sh'
+                     preInstallScript    = '${tmp.dir}/rpm.scripts/preInstall.sh'>
+            <checkUpToDate>
+               <srcfiles dir='${basedir}' includes='**/*.*'/>
+               <srcfiles dir='${rpm.prep.dir}' includes='**/*.*' excludes='**/${build.mode}.properties'/>
+            </checkUpToDate>
+            <rpmElements>
+               <!--TODO: this link should only happen if this is a 'java' rpm -->
+               <link path='/opt/abacus/${product.name}/etc/logback.xml' target='/opt/abacus/abacus-java18/etc/logback.xml' permissions="755"/>
+               <depends name='abacus-base'       comparison='greater|equal' version='1.0'/>
+               <zipfileset prefix='/opt/abacus/' dir='${rpm.prep.dir}'/>
+               <linkdir path='/'           target='/opt/abacus/${product.name}/os/' root='${rpm.prep.dir}/${product.name}/os'/>
+               <linkdir path='/opt/abacus/etc/db' target='/opt/abacus/${product.name}/db/' root='${rpm.prep.dir}/${product.name}/db'/>
+               <additionalRpmElements/>
+            </rpmElements>
+         </rpm.create>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='copy.with.default'>
+      <attribute name='src'/>
+      <attribute name='dest'/>
+      <attribute name='def'/>
+      <attribute name='file'/>
+      <sequential>
+         <mkdir dir='@{dest}'/>
+         <if>
+            <available file='@{src}/@{file}'/>
+            <then>
+               <copy tofile='@{dest}/@{file}' file='@{src}/@{file}'/>
+            </then>
+            <else>
+               <copy tofile='@{dest}/@{file}' file='@{def}'/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='check.if.uptodate'>
+      <attribute name='dirs' default='${basedir},${dist.dir}'/>
+      <sequential>
+         <var name='not-up-to-date' unset='true'/>
+         <local name= 'rpm.exists'/>
+         <for param="dir" list="@{dirs}">
+            <sequential>
+               <if>
+                  <not>
+                     <available file="@{dir}"/>
+                  </not>
+                  <then>
+                     <var name="not-up-to-date" value="true"/>
+                  </then>
+                  <else>
+                     <if>
+                        <equals arg1='@{dir}' arg2='${rpm.dir}'/>
+                        <then>
+                           <pathconvert property="rpm.exists" setonempty='false'>
+                              <path>
+                                 <fileset dir="@{dir}" includes="*${product.name}*" />
+                              </path>
+                           </pathconvert>
+                           <if>
+                              <not>
+                                 <isset property="rpm.exists"/>
+                              </not>
+                              <then>
+                                 <var name="not-up-to-date" value="true"/>
+                              </then>
+                           </if>
+                        </then>
+                     <else>
+                        <outofdate property="not-up-to-date">
+                           <targetfiles path="${tmp.dir}/${ant.project.name}.built.at"/>
+                           <sourcefiles>
+                              <dirset dir="@{dir}"/>
+                           </sourcefiles>
+                        </outofdate>
+                     </else>
+                     </if>
+                  </else>
+               </if>
+            </sequential>
+         </for>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+</project>
