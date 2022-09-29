@@ -18,12 +18,14 @@
         <if>
            <available file="@{dir}/project" type="dir"/>
            <then>
+              <stopwatch name='staticAnalysis'/>
               <echo message='Static Analysis results'/>
               <summarize.java.static.analysis.findBugs dir='@{dir}/project'/>
               <summarize.java.static.analysis.pmd dir='@{dir}/project'/>
               <summarize.java.static.analysis.ecj dir='@{dir}/project'/>
               <summarize.java.static.analysis.checkstyle dir='@{dir}/project'/>
               <summarize.javascript.static.analysis.eslint dir='@{dir}/project'/>
+              <stopwatch action='elapsed' name='staticAnalysis'/>
            </then>
            <else>
               <echo message='No static analysis results available'/>
@@ -37,7 +39,7 @@
       <sequential>
          <echo message="Static Analysis from FindBugs"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/findBugsSummary.txt'/>
+            <fileset dir='@{dir}' includes='**/findBugsSummary.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -52,7 +54,7 @@
       <sequential>
          <echo message="Static Analysis from PMD"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/pmdSummary.txt'/>
+            <fileset dir='@{dir}' includes='**/pmdSummary.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -68,7 +70,7 @@
          <echo message="Static Analysis from Checkstyle"/>
          <delete file='@{dir}/checkstyle_terse.txt'/>
          <concat destfile='@{dir}/checkstyle_terse.txt'>
-            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -77,7 +79,7 @@
          </concat>
          <echo message="Checkstyle issues by Component"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/checkstyle_terse_summary.txt'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -87,7 +89,7 @@
 
          <delete file='@{dir}/checkstyle_type.txt'/>
          <concat destfile='@{dir}/checkstyle_type.txt'>
-            <fileset dir='@{dir}' includes='**/checkstyle_type_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/checkstyle_type_summary.txt'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -98,7 +100,7 @@
          <echo/>
          <echo message="Checkstyle issues by Component and Type"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/checkstyle_counts.properties'/>
+            <fileset dir='@{dir}' includes='**/checkstyle_counts.properties'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                   <regexp pattern="^\s+$"/>
@@ -119,7 +121,7 @@
          <echo message="Static Analysis from ESLint"/>
          <delete file='@{dir}/ESLint_checkstyle_terse.txt'/>
          <concat destfile='@{dir}/ESLint_checkstyle_terse.txt'>
-            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -128,7 +130,7 @@
          </concat>
          <echo message="ESLint issues by Component"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_terse_summary.txt'  excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -138,7 +140,7 @@
 
          <delete file='@{dir}/ESLint_checkstyle_type.txt'/>
          <concat destfile='@{dir}/ESLint_checkstyle_type.txt'>
-            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_type_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_type_summary.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="^\s+$"/>
@@ -149,7 +151,7 @@
          <echo/>
          <echo message="ESLint issues by Component and Type"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_counts.properties'/>
+            <fileset dir='@{dir}' includes='**/ESLint_checkstyle_counts.properties' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                   <regexp pattern="^\s+$"/>
@@ -165,7 +167,7 @@
          <echo message="Static Analysis from ECJ"/>
          <delete file='@{dir}/ecj_terse.txt'/>
          <concat destfile='@{dir}/ecj_terse.txt'>
-            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="0\tEclipse Compiler Warnings"/>
@@ -178,7 +180,7 @@
 
          <echo message="Eclipse issues by component"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt'/>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_summary.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                  <regexp pattern="0\tEclipse Compiler Warnings"/>
@@ -192,7 +194,7 @@
 
          <echo message="Eclipse issues by Component and Type"/>
          <concat>
-            <fileset dir='@{dir}' includes='**/eclipse.counts.properties'/>
+            <fileset dir='@{dir}' includes='**/eclipse.counts.properties' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                   <regexp pattern="^\s+$"/>
@@ -202,7 +204,7 @@
 
          <delete file='@{dir}}/ecj_types.txt'/>
          <concat destfile='@{dir}/ecj_types.txt'>
-            <fileset dir='@{dir}' includes='**/eclipse.compile_types.txt'/>
+            <fileset dir='@{dir}' includes='**/eclipse.compile_types.txt' excludes='**/node_modules'/>
             <filterchain>
                <linecontainsregexp negate="true">
                   <regexp pattern="^\s+$"/>
@@ -231,10 +233,11 @@
          while ( list.hasMoreElements() )
          {
             var oneKey = list.nextElement();
-            if (oneKey.indexOf("UNKNOWN") !== -1)
-            {
-               fail = true;
-            }
+            // TODO: put the always fail on UNKNOWN back
+            // if (oneKey.indexOf("UNKNOWN") !== -1)
+            // {
+            //   fail = true;
+            // }
             var stringValue = actual.getProperty(oneKey);
             if ( stringValue != null )
             {
@@ -289,7 +292,4 @@
       ]]>
    </scriptdef>
 
-
-
 </project>
-

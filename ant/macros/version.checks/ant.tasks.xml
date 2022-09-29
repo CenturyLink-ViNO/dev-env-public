@@ -56,6 +56,9 @@
    </macrodef>
 
    <macrodef name="check.basic.requirements">
+      <attribute name='expected.ant.version' default='${expected.ant.version}'/>
+      <attribute name='expected.java.version' default='${expected.java.version}'/>
+      <attribute name='expected.java.version.regex' default='${expected.java.version.regex}'/>
       <sequential>
          <fail message="Currently only EL based systems are supported">
             <condition>
@@ -64,9 +67,9 @@
                </not>
             </condition>
          </fail>
-         <check.ant.and.java.version expected.ant.version="${expected.ant.version}"
-                                     expected.java.version="${expected.java.version}"
-                                     expected.java.version.regex="${expected.java.version.regex}"/>
+         <check.ant.and.java.version expected.ant.version="@{expected.ant.version}"
+                                     expected.java.version="@{expected.java.version}"
+                                     expected.java.version.regex="@{expected.java.version.regex}"/>
          <check.if.executable.exists executable='docker'/>
          <check.if.executable.exists executable='eslint'/>
          <check.if.executable.exists executable='lessc'/>

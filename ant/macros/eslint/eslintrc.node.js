@@ -1,5 +1,7 @@
 /* global module */
 
+'use strict';
+
 module.exports =
 {
    'extends': ['./eslintrc.overrides.js'],
@@ -15,7 +17,8 @@ module.exports =
       'no-bitwise': 'off',
       'max-statements': ['error', { 'max': 80 }],
       'no-negated-condition': 'off',
-      'prefer-rest-params': 'off'
+      'prefer-rest-params': 'off',
+      'class-methods-use-this': 'off'
    },
    'overrides': [
       {

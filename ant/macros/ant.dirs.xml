@@ -35,11 +35,10 @@
    <property name="dist.dir"                 location="${dist.product}/${build.mode}"/>
    <property name="maven.build.dir"          location="${dist.dir}/mvn"/>
 
+   <property name="image.dir"                location="${dist.dir}/image"/>
+   <property name="docker-dist.dir"          location="${image.dir}/${product.name}/etc"/>
    <property name="docker.dir"               location="${basedir}/docker"/>
    <property name="docker-prep.dir"          location="${dist.dir}/docker"/>
-   <property name="docker-dist.dir"          location="${dist.root}/docker"/>
-
-   <property name="image.dir"                location="${dist.dir}/image"/>
    <property name="rpm.prep.dir"             location="${image.dir}"/>
    <property name="web.dir"                  location="${image.dir}/${product.name}/web"/>
    <property name="yang.dir"                 location="${basedir}/image/os/usr/share/abacus/modules"/>

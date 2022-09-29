@@ -11,6 +11,10 @@
       <os family="unix"/>
    </condition>
 
+   <condition property="os.mac" value="true">
+      <os family="mac"/>
+   </condition>
+
    <if>
       <isset property="os.linux"/>
       <then>

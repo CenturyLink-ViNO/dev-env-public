@@ -1,0 +1,16 @@
+ant/macros/checkstyle/checkstyle-7.8.2/checkstyle-7.8.2-all.jar
+ant/macros/ivy/ivy-2.4.0.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/annotations-2.0.1.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/asm-5.0.3.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/asm-analysis-5.0.3.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/asm-tree-5.0.3.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/asm-util-5.0.3.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/commons-collections-3.2.2.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/commons-configuration-1.10.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/commons-lang-2.6.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/commons-logging-1.2.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/enunciate-c-xml-client-2.10.0.jar
+ant/macros/jws.doc/enunciate-2.10.0/lib/enunciate-core-2.10.0.jar
+ant/macros/python/pyAntTasks-1.3.3.jar
+ant/macros/eslint/node_modules
+ant/macros/eslint/package-lock.json

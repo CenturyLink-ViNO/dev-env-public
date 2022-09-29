@@ -104,31 +104,40 @@
    <!-- ======================================================================================================== -->
 
    <macrodef name="echo.relavent.properties">
+      <attribute name='tasks.ant.addons.dir' default='${tasks.ant.addons.dir}'/>
+      <attribute name='hostinfo.ip.address' default='${hostinfo.ip.address}'/>
+      <attribute name='version.major' default='${version.major}'/>
+      <attribute name='version.minor' default='${version.minor}'/>
+      <attribute name='version.revision' default='${version.revision}'/>
+      <attribute name='version.fix' default='${version.fix}'/>
+      <attribute name='version.buildid' default='${version.buildid}'/>
+      <attribute name='tree.top' default='${tree.top}'/>
+      <attribute name='build.mode' default='${build.mode}'/>
       <sequential>
          <echo message="Java             : ${java.vendor}, Java ${java.version} from ${java.home}"/>
          <echo message="Ant              : ${ant.version} from ${ant.home}"/>
          <echo message="ant.library.dir  : ${ant.library.dir}"/>
-         <echo message="ant.addon.dir    : ${tasks.ant.addons.dir}"/>
+         <echo message="ant.addon.dir    : @{tasks.ant.addons.dir}"/>
          <echo message="os               : ${os.name}/${os.arch}"/>
          <echo message="user.name        : ${user.name}"/>
          <echo message="user.home        : ${user.home}"/>
-         <echo message="Build Device IP  : ${hostinfo.ip.address}"/>
-         <echo message="BuildMode        : ${build.mode}"/>
+         <echo message="Build Device IP  : @{hostinfo.ip.address}"/>
+         <echo message="BuildMode        : @{build.mode}"/>
          <echo message="TStamp           : ${TSTAMP}"/>
          <echo message="DStamp           : ${DSTAMP}"/>
          <echo message="Today            : ${TODAY}"/>
          <echo message="ant.file         : ${ant.file}"/>
-         <echo message="tree.top         : ${tree.top}"/>
+         <echo message="tree.top         : @{tree.top}"/>
          <echo message="Project Basedir  : ${basedir}"/>
          <echo message="ant.project.name : ${ant.project.name}"/>
          <echo message="BUILD_ID         : ${BUILD_ID}"/>
          <echo message="BUILD_NUMBER     : ${BUILD_NUMBER}"/>
          <echo message="JOB_NAME         : ${JOB_NAME}"/>
-         <echo message="version.major    : ${version.major}"/>
-         <echo message="version.minor    : ${version.minor}"/>
-         <echo message="version.revision : ${version.revision}"/>
-         <echo message="version.fix      : ${version.fix}"/>
-         <echo message="version.buildid  : ${version.buildid}"/>
+         <echo message="version.major    : @{version.major}"/>
+         <echo message="version.minor    : @{version.minor}"/>
+         <echo message="version.revision : @{version.revision}"/>
+         <echo message="version.fix      : @{version.fix}"/>
+         <echo message="version.buildid  : @{version.buildid}"/>
       </sequential>
    </macrodef>
 

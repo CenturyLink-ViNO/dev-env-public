@@ -1,0 +1,9 @@
+/* global module */
+
+module.exports =
+{
+   'extends': ['./eslintrc.react.js'],
+      'no-console': 'off',
+      'no-debugger': 'off'
+   }
+};

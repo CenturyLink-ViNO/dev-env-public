@@ -9,6 +9,7 @@
       <attribute name='inputDir' default='${css.src.dir}'/>
       <attribute name='fileName'/>
       <attribute name='outputDir' default='${web.css.dir}'/>
+      <attribute name='windows.less' default='${windows.less}'/>
       <sequential>
          <local name='css-up-to-date'/>
          <uptodate property='css-up-to-date' targetfile='@{outputDir}/@{fileName}.css'>
@@ -28,7 +29,7 @@
                </exec>
                <exec executable='cmd.exe' osfamily='windows' failonerror='true' output='@{outputDir}/@{fileName}.css'>
                   <arg value='/k'/>
-                  <arg value='${windows.less}'/>
+                  <arg value='@{windows.less}'/>
                   <arg value='@{inputDir}/@{fileName}.less'/>
                </exec>
                <echo>compile.less - generated @{outputDir}/@{fileName}.css</echo>

@@ -3,7 +3,117 @@
 
    <dirname property='build.common.xml.dir' file='${ant.file.build.common}'/>
 
+   <!-- antcall reparses the build file, let's see if we can do this without reparsing -->
+   <scriptdef name="antCallTarget" language="javascript">
+      <attribute name='target'/>
+      <![CDATA[
+         target = attributes.get("target");
+         // echo = self.project.createTask("echo");
+         // echo.setMessage("antCallTarget:" + target);
+         // echo.perform();
+         self.project.executeTarget(target);
+         // echoTask = self.project.createTask("echo");
+         // echoTask.setMessage("antCallTarget out:" + target);
+         // echoTask.perform();
+      ]]>
+   </scriptdef>
+
+   <macrodef name='abacus.project.build'>
+      <attribute name='dir'/>
+      <attribute name='project' default='NOT SET'/>
+      <attribute name='target' default='dist'/>
+      <sequential>
+         <local name='project'/>
+         <if>
+            <equals arg1='@{project}' arg2='NOT SET'/>
+            <then>
+               <basename property='project' file='@{dir}'/>
+            </then>
+            <else>
+               <property name='project' value='@{project}'/>
+            </else>
+         </if>
+         <mkdir dir='${dist.root}/tmp'/>
+         <local name='up-to-date'/>
+         <!-- echo message='Checking files in @{dir} against ${dist.root}/tmp/@{project}.built.at'/ -->
+         <uptodate property='up-to-date' targetfile='${dist.root}/tmp/${project}.built.at'>
+            <srcfiles dir='@{dir}' includes='**/*'/>
+         </uptodate>
+         <if>
+            <not>
+               <isset property='up-to-date'/>
+            </not>
+            <then>
+               <!-- echo message='calling subant for @{dir}'/ -->
+               <subant target='@{target}' inheritrefs='false'>
+                  <fileset dir='@{dir}' includes='build.xml'/>
+               </subant>
+               <touch file='${dist.root}/tmp/${project}.built.at'/>
+            </then>
+            <else>
+               <echo message='${project} already up to date'/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='build.dependent'>
+      <attribute name='prefix'/>
+      <attribute name='project'/>
+      <attribute name='dir' default='${tree.top}/@{prefix}/@{project}'/>
+      <attribute name='target' default='@{project}'/>
+      <sequential>
+         <abacus.project.build dir='@{dir}' project='@{project}' target='@{target}'/>
+      </sequential>
+   </macrodef>
+
+   <!-- build.dependent.library dir='components/abacus-base'/ -->
+   <!-- build.dependent prefix='components' project='abacus-base'/ -->
+
    <macrodef name='build.dependent.library'>
+      <attribute name='dir'/>
+      <attribute name='prefix' default='NOT SET'/>
+      <attribute name='project' default='NOT SET'/>
+      <attribute name='target' default='NOT SET'/>
+      <sequential>
+         <local name='project'/>
+         <if>
+            <equals arg1='@{project}' arg2='NOT SET'/>
+            <then>
+               <basename property='project' file='@{dir}'/>
+            </then>
+            <else>
+               <property name='project' value='@{project}'/>
+            </else>
+         </if>
+         <local name='target'/>
+         <if>
+            <equals arg1='@{target}' arg2='NOT SET'/>
+            <then>
+               <property name='target' value='${project}'/>
+            </then>
+            <else>
+               <property name='target' value='@{target}'/>
+            </else>
+         </if>
+         <local name='prefix'/>
+         <if>
+            <equals arg1='@{prefix}' arg2='NOT SET'/>
+            <then>
+               <basename property='prefix' file='@{dir}/..'/>
+            </then>
+            <else>
+               <property name='prefix' value='@{prefix}'/>
+            </else>
+         </if>
+         <local name='dir'/>
+         <property name='dir' location='${tree.top}/@{dir}'/>
+         <!-- echo message='build.dependent prefix=${prefix} project=${project} target=${target} dir=${dir}'/ -->
+         <build.dependent prefix='${prefix}' project='${project}' dir='${dir}' target='${target}'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='build.dependent.library.old'>
       <attribute name='dir'/>
       <sequential>
           <uptodate property='up-to-date-@{dir}' targetfile='${tmp.dir}/../@{dir}/@{dir}.built.at'>
@@ -41,7 +151,9 @@
       <identify.build/>
    </target>
 
-   <target name='dist' depends='rpm' description='Creates distributable'>
+   <target name='distribute' depends='rpm'/>
+
+   <target name='dist' depends='distribute' description='Creates distributable'>
       <echo message='${product.name} Distribution Package created.'/>
    </target>
 

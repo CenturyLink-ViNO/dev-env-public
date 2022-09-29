@@ -6,6 +6,11 @@
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
+   <!--
+      To search for all error types present:
+         cat ant.log | grep "ESLint ERROR" | sed "s/.*(\(.*\))/\1/" | grep -v "Parsing error" | sort | uniq
+   -->
+
    <xsl:strip-space elements="*"/>
    <!-- <xsl:strip-space elements="checkstyle"/> -->
    <!-- <xsl:preserve-space elements="file"/> -->
@@ -71,6 +76,7 @@
       <xsl:variable name="totalWarning_prototypeBuiltins"        select="count(//file/error[contains(@message, '(no-prototype-builtins)')])"/>
       <xsl:variable name="totalWarning_no-plusplus"              select="count(//file/error[contains(@message, '(no-plusplus)')])"/>
       <xsl:variable name="totalWarning_prefer-const"             select="count(//file/error[contains(@message, '(prefer-const)')])"/>
+      <xsl:variable name="totalWarning_function-call-argument-newline"     select="count(//file/error[contains(@message, '(function-call-argument-newline)')])"/>
 
       <xsl:variable name="totalWarning_globalRequire"            select="count(//file/error[contains(@message, '(global-require)')])"/>
       <xsl:variable name="totalWarning_noBitwise"                select="count(//file/error[contains(@message, '(no-bitwise)')])"/>
@@ -134,6 +140,7 @@
       <xsl:variable name="totalWarning_spaceInfixOps"            select="count(//file/error[contains(@message, '(space-infix-ops)')])"/>
       <xsl:variable name="totalWarning_noMultipleEmptyLines"     select="count(//file/error[contains(@message, '(no-multiple-empty-lines)')])"/>
       <xsl:variable name="totalWarning_noLoopFunc"               select="count(//file/error[contains(@message, '(no-loop-func)')])"/>
+      <xsl:variable name="totalWarning_noLoneBlocks"             select="count(//file/error[contains(@message, '(no-lone-blocks)')])"/>
       <xsl:variable name="totalWarning_commaSpacing"             select="count(//file/error[contains(@message, '(comma-spacing)')])"/>
       <xsl:variable name="totalWarning_noTabs"                   select="count(//file/error[contains(@message, '(no-tabs)')])"/>
       <xsl:variable name="totalWarning_noUselessCatch"           select="count(//file/error[contains(@message, '(no-useless-catch)')])"/>
@@ -162,6 +169,16 @@
       <xsl:variable name="totalWarning_typescript_explicitFunct" select="count(//file/error[contains(@message, '(@typescript-eslint/explicit-function-return-type')])"/>
       <xsl:variable name="totalWarning_typescript_banTypes"      select="count(//file/error[contains(@message, '(@typescript-eslint/ban-types')])"/>
       <xsl:variable name="totalWarning_typescript_annotationSpc" select="count(//file/error[contains(@message, '(@typescript-eslint/type-annotation-spacing')])"/>
+
+      <xsl:variable name="totalWarning_spaced-comment"    select="count(//file/error[contains(@message, '(spaced-comment)')])"/>
+      <xsl:variable name="totalWarning_vars-on-top"    select="count(//file/error[contains(@message, '(vars-on-top)')])"/>
+      <xsl:variable name="totalWarning_id-length"    select="count(//file/error[contains(@message, '(id-length)')])"/>
+      <xsl:variable name="totalWarning_prefer-named-capture-group"    select="count(//file/error[contains(@message, '(prefer-named-capture-group)')])"/>
+
+      <xsl:variable name="totalWarning_dot-notation"    select="count(//file/error[contains(@message, '(dot-notation)')])"/>
+
+      <xsl:variable name="totalWarning_no-underscore-dangle"    select="count(//file/error[contains(@message, '(no-underscore-dangle)')])"/>
+      <xsl:variable name="totalWarning_default-param-last"    select="count(//file/error[contains(@message, '(default-param-last)')])"/>
 
       <xsl:variable name="totalWarning_"                         select="count(//file/error[contains(@message, '')])"/>
 
@@ -285,6 +302,14 @@
                             $totalWarning_typescript_noExplicitAny +
                             $totalWarning_typescript_explicitFunct +
                             $totalWarning_typescript_banTypes +
+                            $totalWarning_spaced-comment +
+                            $totalWarning_vars-on-top +
+                            $totalWarning_id-length +
+                            $totalWarning_prefer-named-capture-group +
+                            $totalWarning_dot-notation +
+                            $totalWarning_function-call-argument-newline +
+                            $totalWarning_no-underscore-dangle +
+                            $totalWarning_default-param-last +
                             $totalWarning_typescript_annotationSpc"/>
 
       <xsl:if test="$precision = 'terse'">
@@ -681,6 +706,10 @@
             <xsl:with-param name='errorType' select="'noLoopFunc'"/>
          </xsl:call-template>
          <xsl:call-template name="output">
+            <xsl:with-param name='value'     select="$totalWarning_noLoneBlocks"/>
+            <xsl:with-param name='errorType' select="'noLoneBlocks'"/>
+         </xsl:call-template>
+         <xsl:call-template name="output">
             <xsl:with-param name='value'     select="$totalWarning_commaSpacing"/>
             <xsl:with-param name='errorType' select="'commaSpacing'"/>
          </xsl:call-template>
@@ -752,6 +781,10 @@
             <xsl:with-param name='value'     select="$totalWarning_arrowParens"/>
             <xsl:with-param name='errorType' select="'arrowParens'"/>
          </xsl:call-template>
+         <xsl:call-template name="output">^M
+            <xsl:with-param name='value'     select="$totalWarning_function-call-argument-newline"/>^M
+            <xsl:with-param name='errorType' select="'function-call-argument-newline'"/>^M
+         </xsl:call-template>^M
          <xsl:call-template name="output">
             <xsl:with-param name='value'     select="$totalWarning_typescript_noVarRequires"/>
             <xsl:with-param name='errorType' select="'typescript_noVarRequires'"/>
@@ -792,6 +825,34 @@
             <xsl:with-param name='value'     select="$totalWarning_typescript_annotationSpc"/>
             <xsl:with-param name='errorType' select="'typescript_annotationSpc'"/>
          </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_spaced-comment"/> 
+            <xsl:with-param name='errorType' select="'spaced-comment'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_vars-on-top"/> 
+            <xsl:with-param name='errorType' select="'vars-on-top'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_id-length"/> 
+            <xsl:with-param name='errorType' select="'id-length'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_prefer-named-capture-group"/> 
+            <xsl:with-param name='errorType' select="'prefer-named-capture-group'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_dot-notation"/> 
+            <xsl:with-param name='errorType' select="'dot-notation'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_no-underscore-dangle"/> 
+            <xsl:with-param name='errorType' select="'no-underscore-dangle'"/> 
+         </xsl:call-template>
+         <xsl:call-template name="output"> 
+            <xsl:with-param name='value'     select="$totalWarning_default-param-last"/> 
+            <xsl:with-param name='errorType' select="'default-param-last'"/> 
+         </xsl:call-template>
          <xsl:call-template name="output">
             <xsl:with-param name='value'     select="$totalIssueCount - $knownIssues"/>
             <xsl:with-param name='errorType' select="'UNKNOWN_ERROR_TYPE'"/>
@@ -823,3 +884,6 @@
    </xsl:template>
 
 </xsl:stylesheet>
+
+
+

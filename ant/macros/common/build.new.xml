@@ -36,7 +36,7 @@
       <mark.build.complete/>
    </target>
 
-   <target name='common.dist.prepare' depends='identify.build, compile, check.jars, dist.parts'/>
+   <target name='common.dist.prepare' depends='identify.build, compile, jars, dist.parts'/>
 
    <target name='publish' depends='gen.pom, publish.local'/>
 
@@ -51,11 +51,11 @@
          </else>
       </if>
    </target>
-   
+
    <target name='docker.build'>
       <docker.build/>
    </target>
-   
+
    <target name='docker.dist'>
       <docker.dist/>
    </target>
@@ -99,7 +99,7 @@
       </else>
       </if>
    </target>
-   
+
    <target name='check.jars'>
       <if>
          <available file='${java.main.src.dir}' type='dir'/>
@@ -164,13 +164,27 @@
          <available file='${java.main.src.dir}' type='dir'/>
          <then>
             <mkdir dir='${jar.dir}'/>
-            <path id='building.class.path'>
-               <path refid='ivy.compile.path'/>
-               <pathelement location='${class.dir}'/>
-               <fileset dir='${jar.dir}'>
-                  <include name='**/*-generated.jar'/>
-               </fileset>
-            </path>
+            <if>
+               <available file='${basedir}/ivy.xml'/>
+               <then>
+                  <ivy.resolve/>
+                  <path id='building.class.path'>
+                     <path refid='ivy.compile.path'/>
+                     <pathelement location='${class.dir}'/>
+                     <fileset dir='${jar.dir}'>
+                        <include name='**/*-generated.jar'/>
+                     </fileset>
+                  </path>
+               </then>
+               <else>
+                  <path id='building.class.path'>
+                     <pathelement location='${class.dir}'/>
+                     <fileset dir='${jar.dir}'>
+                        <include name='**/*-generated.jar'/>
+                     </fileset>
+                  </path>
+               </else>
+            </if>
             <!--
             <local name='cpProp'/>
             <pathconvert property='cpProp' refid='building.class.path'/>
@@ -253,12 +267,24 @@
          <available file='${java.main.src.dir}' type='dir'/>
          <then>
             <local name='javadocClassPath'/>
-            <path id='javadocClassPath'>
-               <path refid='ivy.compile.path'/>
-               <fileset dir='${jar.dir}'>
-                  <include name='**/*.jar'/>
-               </fileset>
-            </path>
+            <if>
+               <available file='${basedir}/ivy.xml'/>
+               <then>
+                  <path id='javadocClassPath'>
+                     <path refid='ivy.compile.path'/>
+                     <fileset dir='${jar.dir}'>
+                        <include name='**/*.jar'/>
+                     </fileset>
+                  </path>
+               </then>
+               <else>
+                  <path id='javadocClassPath'>
+                     <fileset dir='${jar.dir}'>
+                        <include name='**/*.jar'/>
+                     </fileset>
+                  </path>
+               </else>
+            </if>
             <java.docjar src.dir='${java.main.src.dir}'
                          doc.dir='${doc.api.dir}'
                          jar.dir='${jar.dir}'

@@ -4,7 +4,7 @@
 
 module.exports =
 {
-   'extends': ['./eslintrc.browser.js'],
+   'extends': ['./eslintrc.react.js'],
    'rules': {
       'no-console': 'error',
       'no-debugger': 'error'

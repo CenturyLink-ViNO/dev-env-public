@@ -24,15 +24,24 @@
    </scriptdef>
 
    <macrodef name="create.version.info.file">
+      <attribute name='abacus.product.name' default='${abacus.product.name}'/>
+      <attribute name='build.mode' default='${build.mode}'/>
+      <attribute name='product.name' default='${product.name}'/>
+      <attribute name='image.dir' default='${image.dir}'/>
+      <attribute name='version.major' default='${version.major}'/>
+      <attribute name='version.minor' default='${version.minor}'/>
+      <attribute name='version.revision' default='${version.revision}'/>
+      <attribute name='version.fix' default='${version.fix}'/>
+      <attribute name='version.buildid' default='${version.buildid}'/>
       <sequential>
-         <capitalize string='${abacus.product.name}' to='title'/>
-         <mkdir dir='${image.dir}/${product.name}/etc'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='false' message='name=${title}${line.separator}'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='major=${version.major}${line.separator}'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='minor=${version.minor}${line.separator}'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='revision=${version.revision}${line.separator}'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='fix=${version.fix}${line.separator}${line.separator}'/>
-         <echo file='${image.dir}/${product.name}/etc/${build.mode}.properties' append='true'  message='buildid=${version.buildid}${line.separator}${line.separator}'/>
+         <capitalize string='@{abacus.product.name}' to='title'/>
+         <mkdir dir='@{image.dir}/@{product.name}/etc'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='false' message='name=@{title}${line.separator}'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='true'  message='major=@{version.major}${line.separator}'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='true'  message='minor=@{version.minor}${line.separator}'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='true'  message='revision=@{version.revision}${line.separator}'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='true'  message='fix=@{version.fix}${line.separator}${line.separator}'/>
+         <echo file='@{image.dir}/@{product.name}/etc/@{build.mode}.properties' append='true'  message='buildid=@{version.buildid}${line.separator}${line.separator}'/>
          <var name='title' unset='true'/>
       </sequential>
    </macrodef>

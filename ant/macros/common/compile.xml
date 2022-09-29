@@ -62,11 +62,13 @@
    </target>
 
    <macrodef name='compile.javascript.macro' description='Check JavaScript for style and syntax issues'>
+      <attribute name='dir' default='.'/>
       <sequential>
          <if>
             <resourcecount when="greater" count="0">
-               <fileset dir=".">
+               <fileset dir="@{dir}">
                   <include name='**/*.js'/>
+                  <exclude name='**/*.nr.js'/>
                   <exclude name="**/web/**/*.js"/>                          <!-- ui code -->
                   <exclude name='**/settings.js'/>                             <!-- node red settings -->
                   <exclude name='**/ots/**/*.js'/>                             <!-- 3rd party software -->
@@ -81,8 +83,9 @@
                <echo message='${product.name} - Checking module JavaScript style and syntax.'/>
                <mkdir dir='${tmp.dir}/jscompile.node'/>
                <copy todir='${tmp.dir}/jscompile.node'>
-                  <fileset dir='.'>
+                  <fileset dir='@{dir}'>
                      <include name='**/*.js'/>
+                     <exclude name='**/*.nr.js'/>
                      <exclude name="**/web/**/*.js"/>                          <!-- ui code -->
                      <exclude name='**/settings.js'/>                             <!-- node red settings -->
                      <exclude name='**/ots/**/*.js'/>                             <!-- 3rd party software -->
@@ -102,8 +105,9 @@
          <if>
             <and>
                <resourcecount when="greater" count="0">
-                  <fileset dir='.'>
+                  <fileset dir='@{dir}'>
                      <include name='**/web/**/*.js'/>
+                     <exclude name='**/*.nr.js'/>
                      <exclude name='**/settings.js'/>                <!-- node red settings -->
                      <exclude name='**/ots/**/*.js'/>                <!-- 3rd party software -->
                      <exclude name="**/bootstrap/**/*.js"/>          <!-- 3rd party software -->
@@ -114,8 +118,9 @@
                <echo message='${product.name} - Checking web JavaScript style and syntax.'/>
                <mkdir dir='${tmp.dir}/jscompile.browser.${build.mode}'/>
                <copy todir='${tmp.dir}/jscompile.browser.${build.mode}'>
-                  <fileset dir='.'>
+                  <fileset dir='@{dir}'>
                      <include name='**/web/**/*.js'/>
+                     <exclude name='**/*.nr.js'/>
                      <exclude name='**/settings.js'/>                <!-- node red settings -->
                      <exclude name='**/ots/**/*.js'/>                <!-- 3rd party software -->
                      <exclude name="**/bootstrap/**/*.js"/>          <!-- 3rd party software -->
@@ -130,6 +135,7 @@
                <copy todir='${image.out.dir}'>
                   <fileset dir='image'>
                      <include name='**/*.js'/>
+                     <exclude name='**/*.nr.js'/>
                   </fileset>
                </copy>
             </then>
@@ -137,7 +143,7 @@
          <if>
             <and>
                <resourcecount when="greater" count="0">
-                  <fileset dir='.'>
+                  <fileset dir='@{dir}'>
                      <include name='**/*.ts'/>
                   </fileset>
                </resourcecount>
@@ -146,7 +152,7 @@
                <echo message='${product.name} - Checking TypeScript style and syntax.'/>
                <mkdir dir='${tmp.dir}/jscompile.typescript'/>
                <copy todir='${tmp.dir}/jscompile.typescript'>
-                  <fileset dir='.'>
+                  <fileset dir='@{dir}'>
                      <include name='**/*.ts'/>
                   </fileset>
                </copy>
@@ -163,6 +169,64 @@
                </copy>
             </then>
          </if>
+
+         <if>
+            <resourcecount when="greater" count="0">
+               <fileset dir="@{dir}">
+                  <include name='**/*.nr.js'/>
+               </fileset>
+            </resourcecount>
+            <then>
+               <echo message='${product.name} - Checking Node-Red external function JavaScript style and syntax.'/>
+               <mkdir dir='${tmp.dir}/jscompile.node-red'/>
+               <copy todir='${tmp.dir}/jscompile.node-red'>
+                  <fileset dir='@{dir}'>
+                     <include name='**/*.nr.js'/>
+                  </fileset>
+               </copy>
+               <javascript.build src.dir='${tmp.dir}/jscompile.node-red'
+                                 out.dir='${tmp.dir}'
+                                 failonerror='true'
+                                 sourceType='nodered'/>
+               <mkdir dir='${image.out.dir}'/>
+               <copy todir='${image.out.dir}'>
+                  <fileset dir='image'>
+                     <include name='**/*.nr.js'/>
+                  </fileset>
+               </copy>
+            </then>
+         </if>
+
+         <if>
+            <resourcecount when="greater" count="0">
+               <fileset dir="@{dir}">
+                  <include name='**/*.jsx'/>
+               </fileset>
+            </resourcecount>
+            <then>
+               <echo message='${product.name} - Checking React style and syntax.'/>
+               <mkdir dir='${tmp.dir}/jscompile.react'/>
+               <copy todir='${tmp.dir}/jscompile.react'>
+                  <fileset dir='@{dir}'>
+                     <include name='**/*.jsx'/>
+                  </fileset>
+               </copy>
+               <javascript.build src.dir='${tmp.dir}/jscompile.react'
+                                 out.dir='${tmp.dir}'
+                                 failonerror='true'
+                                 file.extension='jsx'
+                                 sourceType='react.${build.mode}'/>
+               <!--
+               <mkdir dir='${image.out.dir}'/>
+               <copy todir='${image.out.dir}'>
+                  <fileset dir='image'>
+                     <include name='**/*.jsx'/>
+                  </fileset>
+               </copy>
+               -->
+            </then>
+         </if>
+
       </sequential>
    </macrodef>
 
@@ -207,6 +271,7 @@
    </target>
 
    <!-- ======================================================================================================== -->
+
    <target name='compile.java' depends='ivy.path' description='Compiles Java source code'>
       <property name='java.compile.override.fail.on.optional' value='true'/>
       <property name='java.compile.override.promote.warnings' value='true'/>
@@ -421,13 +486,15 @@
 
    <target name='dist.rpm-prep'>
       <if>
-         <available file='rpm' type='dir'/>
+         <isset property='tasks.rpm.dir'/>
          <then>
+            <local name='version'/>
+            <property name='version' value='${version.major}.${version.minor}.${version.revision}.${version.buildid}'/>
             <mkdir dir='${tmp.dir}/rpm.scripts'/>
-            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postInstall.sh'/>
-            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postUninstall.sh'/>
-            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preInstall.sh'/>
-            <copy.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preUninstall.sh'/>
+            <copy.replace.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postInstall.sh'   token='VERSION' value='${version}'/>
+            <copy.replace.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='postUninstall.sh' token='VERSION' value='${version}'/>
+            <copy.replace.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preInstall.sh'    token='VERSION' value='${version}'/>
+            <copy.replace.with.default src='rpm' dest='${tmp.dir}/rpm.scripts' def='${tasks.rpm.dir}/scripts/noop.sh' file='preUninstall.sh'  token='VERSION' value='${version}'/>
             <fixcrlf srcdir='${tmp.dir}/rpm.scripts' includes='**/*.sh' eol='lf' eof='remove' />
          </then>
       </if>
@@ -440,7 +507,34 @@
       <attribute name='name'     default='${product.name}'/>
       <element name='additionalRpmElements' optional='true'/>
       <sequential>
-         <create.rpm.version.info.file/>
+         <if>
+            <available file='${jar.dir}' type='dir'/>
+            <then>
+               <abacus.basic.rpm.create summary='@{summary}' name='@{name}'>
+                  <additionalRpmElementsIn>
+                     <link path='/opt/abacus/${product.name}/etc/logback.xml' target='/opt/abacus/abacus-java18/etc/logback.xml' permissions="755"/>
+                     <additionalRpmElements/>
+                  </additionalRpmElementsIn>
+               </abacus.basic.rpm.create>
+            </then>
+            <else>
+               <abacus.basic.rpm.create summary='@{summary}' name='@{name}'>
+                  <additionalRpmElementsIn>
+                     <additionalRpmElements/>
+                  </additionalRpmElementsIn>
+               </abacus.basic.rpm.create>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name="abacus.basic.rpm.create">
+      <attribute name='summary'/>
+      <attribute name='name'     default='${product.name}'/>
+      <element name='additionalRpmElementsIn' optional='true'/>
+      <sequential>
          <rpm.create name = '@{name}'
                      summary = '@{summary}'
                      buildid = '${version.buildid}'
@@ -453,13 +547,11 @@
                <srcfiles dir='${rpm.prep.dir}' includes='**/*.*' excludes='**/${build.mode}.properties'/>
             </checkUpToDate>
             <rpmElements>
-               <!--TODO: this link should only happen if this is a 'java' rpm -->
-               <link path='/opt/abacus/${product.name}/etc/logback.xml' target='/opt/abacus/abacus-java18/etc/logback.xml' permissions="755"/>
                <depends name='abacus-base'       comparison='greater|equal' version='1.0'/>
                <zipfileset prefix='/opt/abacus/' dir='${rpm.prep.dir}'/>
                <linkdir path='/'           target='/opt/abacus/${product.name}/os/' root='${rpm.prep.dir}/${product.name}/os'/>
                <linkdir path='/opt/abacus/etc/db' target='/opt/abacus/${product.name}/db/' root='${rpm.prep.dir}/${product.name}/db'/>
-               <additionalRpmElements/>
+               <additionalRpmElementsIn/>
             </rpmElements>
          </rpm.create>
       </sequential>
@@ -481,6 +573,35 @@
             </then>
             <else>
                <copy tofile='@{dest}/@{file}' file='@{def}'/>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='copy.replace.with.default'>
+      <attribute name='src'/>
+      <attribute name='dest'/>
+      <attribute name='def'/>
+      <attribute name='file'/>
+      <attribute name='token'/>
+      <attribute name='value'/>
+      <sequential>
+         <mkdir dir='@{dest}'/>
+         <if>
+            <available file='@{src}/@{file}'/>
+            <then>
+               <copy tofile='@{dest}/@{file}' file='@{src}/@{file}' overwrite='true'>
+                  <filterset>
+                     <filter token='@{token}'    value="@{value}"/>
+                  </filterset>
+               </copy>
+            </then>
+            <else>
+               <copy tofile='@{dest}/@{file}' file='@{def}' overwrite='true'>
+                  <filterset>
+                     <filter token='@{token}'    value="@{value}"/>
+                  </filterset>
+               </copy>
             </else>
          </if>
       </sequential>

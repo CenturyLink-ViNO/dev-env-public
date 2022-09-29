@@ -4,12 +4,6 @@
 
    <dirname property='tasks.json.dir' file='${ant.file.tasks.json.xml}'/>
 
-   <macrodef name='verify.jq'>
-      <sequential>
-         <check.if.executable.exists executable='jq'/>
-      </sequential>
-   </macrodef>
-
    <macrodef name='jq.verify'>
       <attribute name='src.dir' default='${basedir}'/>
       <sequential>
@@ -17,19 +11,18 @@
          <multirootfileset id='json.scan.dir' basedirs='@{src.dir}' includes='**/*.json' excludes='**/.*/**' />
          <local name='json.file.list'/>
          <property name='json.file.list' refid='json.scan.dir'/>
-         <for list='${json.file.list}' delimiter=':' param='json.file'>
+         <for list='${json.file.list}' delimiter='${path.separator}' param='json.file'>
             <sequential>
                <echo message='Scanning file: @{json.file}'/>
+               <check.if.executable.exists executable='jq'/>
                <exec executable='jq' failonerror='true' osfamily='unix' output='/dev/null' logError='true'>
                   <arg value='.'/>
                   <arg value='@{json.file}'/>
                </exec>
                <echo message='Complete'/>
             </sequential>
-         </for>          
+         </for>
       </sequential>
    </macrodef>
-
-   <verify.jq/>
 
 </project>

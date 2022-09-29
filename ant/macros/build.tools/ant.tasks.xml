@@ -32,16 +32,21 @@
                      </not>
                      <then>
                         <echo>Building the [@{name}] sub-project</echo>
+                        <stopwatch name='@{name}.projectBuild'/>
                         <if>
                            <equals arg1="@{target}" arg2=''/>
                            <then>
-                              <antcall target="@{name}"/>
+                              <antCallTarget target="@{name}"/>
+                              <!-- antcall target="@{name}"/ -->
                            </then>
                            <else>
-                              <antcall target="@{target}"/>
+                              <antCallTarget target="@{target}"/>
+                              <!-- antcall target="@{target}"/ -->
                            </else>
                         </if>
+                        <stopwatch name='@{name}.projectBuild' action='elapsed'/>
                         <echo>Done building the [@{name}] sub-project</echo>
+                        <echo>=======================================</echo>
                      </then>
                   </if>
                </actions>
@@ -53,6 +58,8 @@
    <macrodef name="update.repos.from.repo.file">
       <attribute name="repo.file"/>
       <sequential>
+         <delete file='repos.version.info.json'/>
+         <echo file='repos.version.info.json' append='false' message = '{${line.separator}   [${line.separator}'/>
          <check.if.executable.exists executable='git'/>
          <xmltask source="@{repo.file}">
             <call path="repositories/shared/common">
@@ -128,6 +135,9 @@
                            <arg value="stash"/>
                         </exec>
                         <debug.echo message='checking out ${cloneDirectory}'/>
+                        <exec executable="git" dir="${cloneDirectory}" failonerror="false" output="/dev/null" error="gitErrors.log" resultproperty="@{name}.fetch.result">
+                           <arg value="fetch"/>
+                        </exec>
                         <exec executable="git" dir="${cloneDirectory}" failonerror="false" output="/dev/null" error="gitErrors.log" resultproperty="@{name}.checkout.result">
                            <arg value="checkout"/>
                            <arg value="@{ref}"/>
@@ -155,12 +165,21 @@
                         </fail>
                      </else>
                   </if>
+                  <echo file='repos.version.info.json' append='true'>
+      {
+         &apos;name&apos;: &apos;@{name}&apos;,
+         &apos;url&apos;: &apos;${url}&apos;,
+         &apos;dir&apos;: &apos;${cloneDirectory}&apos;,
+         &apos;ref&apos;: &apos;@{ref}&apos;
+      },
+                  </echo>
                   <echo>Updated directory [${cloneDirectory}]</echo>
                   <echo>Done updating the [@{name}] sub-project</echo>
                   <echo>-------------------------------------------------------------</echo>
                </actions>
             </call>
          </xmltask>
+         <echo file='repos.version.info.json' append='true' message = '{}${line.separator}   ]${line.separator}}'/>
       </sequential>
    </macrodef>
 
@@ -169,22 +188,110 @@
       <sequential>
          <check.if.executable.exists executable='git'/>
          <xmltask source="@{repo.file}">
-            <call path="repositories/repository">
-               <param name="name" path="name/text()"/>
-               <param name="url" path="url/text()"/>
-               <param name="cloneDirectory" path="cloneDirectory/text()"/>
-               <param name="ref" path="ref/text()"/>
+            <call path="repositories/shared/common">
+               <param name="shared.clone.dir" path="@cloneDirectory"/>
                <actions>
-                  <echo>Checking status of the [@{name}] sub-project on the [@{ref}] branch</echo>
+                  <property name='shared.clone.dir' value='@{shared.clone.dir}'/>
+               </actions>
+            </call>
+            <call path="repositories/repos/repository">
+               <param name='name'           path="@name"/>
+               <param name='prefix'         path="@prefix"         default=''/>
+               <param name="cloneDirectory" path="@cloneDirectory" default=''/>
+               <actions>
+                  <local name='cloneDirectory'/>
                   <if>
-                     <available file="@{cloneDirectory}" type="dir"/>
+                     <equals arg1="@{cloneDirectory}" arg2=''/>
                      <then>
-                        <exec executable="git" dir='@{cloneDirectory}'>
+                        <if>
+                           <equals arg1="@{prefix}"         arg2=''/>
+                           <then>
+                              <property name='cloneDirectory' value='${shared.clone.dir}/@{name}' />
+                           </then>
+                           <else>
+                              <property name='cloneDirectory' value='${shared.clone.dir}/@{prefix}/@{name}' />
+                           </else>
+                        </if>
+                     </then>
+                     <else>
+                        <property name='cloneDirectory' value='@{cloneDirectory}'/>
+                     </else>
+                  </if>
+                  <echo> -------------------------------------------------------------- </echo>
+                  <echo>updating status [${cloneDirectory}]</echo>
+                  <if>
+                     <available file="${cloneDirectory}" type="dir"/>
+                     <then>
+                        <exec executable="git" dir='${cloneDirectory}' failonerror="true">
                            <arg value="status"/>
                         </exec>
                      </then>
                   </if>
-                  <echo>-------------------------------------------------------------</echo>
+               </actions>
+            </call>
+         </xmltask>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="git.fetch.from.repo.file">
+      <attribute name="repo.file"/>
+      <sequential>
+         <check.if.executable.exists executable='git'/>
+         <xmltask source="@{repo.file}">
+            <call path="repositories/shared/common">
+               <param name="shared.url"       path="@url"/>
+               <param name="shared.ref"       path="@ref"/>
+               <param name="shared.clone.dir" path="@cloneDirectory"/>
+               <actions>
+                  <property name='shared.url'       value='@{shared.url}'/>
+                  <property name='shared.ref'       value='@{shared.ref}'/>
+                  <property name='shared.clone.dir' value='@{shared.clone.dir}'/>
+               </actions>
+            </call>
+            <call path="repositories/repos/repository">
+               <param name='name'           path="@name"/>
+               <param name='prefix'         path="@prefix"         default=''/>
+               <param name='ref'            path="@ref"            default='${shared.ref}'/>
+               <param name="url"            path="@url"            default=''/>
+               <param name="cloneDirectory" path="@cloneDirectory" default=''/>
+               <actions>
+                  <local name='cloneDirectory'/>
+                  <if>
+                     <equals arg1="@{cloneDirectory}" arg2=''/>
+                     <then>
+                        <if>
+                           <equals arg1="@{prefix}"         arg2=''/>
+                           <then>
+                              <property name='cloneDirectory' value='${shared.clone.dir}/@{name}' />
+                           </then>
+                           <else>
+                              <property name='cloneDirectory' value='${shared.clone.dir}/@{prefix}/@{name}' />
+                           </else>
+                        </if>
+                     </then>
+                     <else>
+                        <property name='cloneDirectory' value='@{cloneDirectory}'/>
+                     </else>
+                  </if>
+                  <local name='url'/>
+                  <if>
+                     <equals arg1="@{url}" arg2=''/>
+                     <then>
+                        <property name='url' value='${shared.url}/@{name}.git' />
+                     </then>
+                     <else>
+                        <property name='url' value='@{url}/@{name}.git' />
+                     </else>
+                  </if>
+                  <echo>fetching [${url}] to [${cloneDirectory}]</echo>
+                  <if>
+                     <available file="${cloneDirectory}" type="dir"/>
+                     <then>
+                        <exec executable="git" dir='${cloneDirectory}' failonerror="true" output="/dev/null" error="gitErrors.log">
+                           <arg value="fetch"/>
+                        </exec>
+                     </then>
+                  </if>
                </actions>
             </call>
          </xmltask>

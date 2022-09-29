@@ -1,0 +1,29 @@
+<project name='ant.personal.global.overrides'>
+
+   <!--
+   #
+   # Copy this file to
+   #   ~/ant/ant.global.overrides.xml or
+   # or
+   #    \users\USER\ant\ant.global.overrides.xml
+   # then modify as desired
+
+   # properties in this file are loaded early in the build, and just
+   # before ant.global.overrides.properties,
+   # so should be available to all build scripts
+   -->
+   <!-- property name='build.mode'             value='debug'/-->
+   <!-- property name='echoedHeaderInfo'       value='true'/-->
+   <!-- property name='build.vm.images'        value='0'/-->
+
+   <!-- property name="expected.java.version" value="10"/-->
+   <!-- property name="expected.java.version.regex" value="^1\.10\.0"/-->
+
+   <!-- property name="expected.java.version" value="1.8"/-->
+   <!-- property name="expected.java.version.regex" value="^1\.8\.0"/-->
+
+   <!-- why can't docker containers connect to our network ? -->
+   <!-- property name='docker.use.local.repos' value='false'/-->
+   <!-- property name='docker.local.registry'  value=''/-->
+
+</project>

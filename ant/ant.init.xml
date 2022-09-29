@@ -12,13 +12,29 @@
          <pathelement location="${env.ANT_HOME}/../ant.core/ant-contrib-1.0b3.jar"/>
       </classpath>
    </taskdef>
+
+   <scriptdef name="echoNow" language="javascript">
+      <attribute name="message"/>
+      <![CDATA[
+         varTask = self.project.createTask("echo");
+         var now = new Date();
+         var h = now.getHours();
+         if (h < 10) h = '0' + h;
+         var m = now.getMinutes();
+         if (m < 10) m = '0' + m;
+         var s = now.getSeconds();
+         if (s < 10) s = '0' + s;
+         varTask.setMessage(attributes.get('message') + ' at ' + h + ':' + m + ':' + s);
+         varTask.perform();
+      ]]>
+   </scriptdef>
+
+   <!-- echoNow message="Starting import"/ -->
+   <!-- stopwatch name="importing"/ -->
    <import file="${ant.init.xml.dir}/macros/tree.top/ant.tasks.xml"/>
    <find.tree.top/>
-
    <import file="${ant.init.xml.dir}/local.overrides.xml"/>
-
    <import file="${ant.init.xml.dir}/macros/ant.tasks.xml"/>
-
    <import file="${tree.top}/tools/dev-env/private/ant/macros/ant.tasks.xml" optional='true'/>
-
+   <!-- stopwatch name="importing" action="elapsed"/ -->
 </project>

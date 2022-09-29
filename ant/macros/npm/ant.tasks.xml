@@ -34,11 +34,14 @@
 
    <macrodef name='create.npmrc.file'>
       <attribute name='dest.dir'/>
+      <attribute name='npmrc.template.file' default='${npmrc.template.file}'/>
+      <attribute name='npm.registry.1' default='${npm.registry.1}'/>
+      <attribute name='npm.registry.2' default='${npm.registry.2}'/>
       <sequential>
-         <copy tofile='@{dest.dir}/npmrc' file='${npmrc.template.file}' overwrite='true'>
+         <copy tofile='@{dest.dir}/npmrc' file='@{npmrc.template.file}' overwrite='true'>
             <filterset>
-               <filter token='REGISTRY1'    value="${npm.registry.1}"/>
-               <filter token='REGISTRY2'    value="${npm.registry.2}"/>
+               <filter token='REGISTRY1'           value="@{npm.registry.1}"/>
+               <filter token='REGISTRY2'           value="@{npm.registry.2}"/>
             </filterset>
          </copy>
       </sequential>
@@ -47,29 +50,68 @@
    <macrodef name='npm.build'>
       <attribute name='src.dir'/>
       <attribute name='dist.dir'/>
+      <attribute name='tmp.npm.dir' default='${tmp.npm.dir}'/>
+      <element name='arguments' optional='true'/>
       <sequential>
-         <mkdir dir='${tmp.npm.dir}'/>
-         <create.npmrc.file dest.dir='${tmp.npm.dir}'/>
          <copy todir='@{dist.dir}'>
-            <fileset dir='@{src.dir}'/>
+            <fileset dir='@{src.dir}' excludes='build.xml'/>
          </copy>
-         <exec executable='cmd' dir='@{dist.dir}' failonerror='true' osfamily='windows'>
+         <check.if.executable.exists executable='npm'/>
+         <if>
+            <equals arg1='${npm.use.local.repos}' arg2='false'/>
+            <then>
+               <exec executable='cmd' dir='@{dist.dir}' failonerror='true' osfamily='windows'>
+                  <arguments/>
+                  <arg value='/c'/>
+                  <arg value='npm'/>
+                  <arg value='install'/>
+               </exec>
+               <exec executable='npm' dir='@{dist.dir}' failonerror='true' osfamily='unix'>
+                  <arguments/>
+                  <arg value='install'/>
+               </exec>
+            </then>
+            <else>
+               <mkdir dir='@{tmp.npm.dir}'/>
+               <create.npmrc.file dest.dir='@{tmp.npm.dir}'/>
+               <exec executable='cmd' dir='@{dist.dir}' failonerror='true' osfamily='windows'>
+                  <arguments/>
+                  <arg value='/c'/>
+                  <arg value='npm'/>
+                  <arg value='install'/>
+                  <arg value='--userconfig=@{tmp.npm.dir}/npmrc'/>
+               </exec>
+               <exec executable='npm' dir='@{dist.dir}' failonerror='true' osfamily='unix'>
+                  <arguments/>
+                  <arg value='install'/>
+                  <arg value='--userconfig=@{tmp.npm.dir}/npmrc'/>
+               </exec>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='execNpm'>
+      <attribute name='dir'/>
+      <element name='arguments' optional='true'/>
+      <sequential>
+         <check.if.executable.exists executable='npm'/>
+         <exec executable='cmd' dir='@{dir}' failonerror='true' osfamily='windows'>
             <arg value='/c'/>
             <arg value='npm'/>
-            <arg value='install'/>
-            <arg value='--userconfig=${tmp.npm.dir}/npmrc'/>
+            <arguments/>
          </exec>
-         <exec executable='npm' dir='@{dist.dir}' failonerror='true' osfamily='unix'>
-            <arg value='install'/>
-            <arg value='--userconfig=${tmp.npm.dir}/npmrc'/>
+         <exec executable='npm' dir='@{dir}' failonerror='true' osfamily='unix'>
+            <arguments/>
          </exec>
       </sequential>
    </macrodef>
-   
+
    <macrodef name='tsc.build'>
       <attribute name='src.dir'/>
       <attribute name='dist.dir'/>
       <sequential>
+         <check.if.executable.exists executable='tsc'/>
          <exec executable='cmd' dir='@{src.dir}' failonerror='true' osfamily='windows'>
             <arg value='/c'/>
             <arg value='tsc'/>
@@ -88,5 +130,38 @@
          </copy>
       </sequential>
    </macrodef>
+
+   <macrodef name='verify.node.tools'>
+      <sequential>
+         <check.component.version tool.name='node'  tool.version='v12.18.4'/>
+         <check.component.version tool.name='npm'   tool.version='6.14.6'/>
+         <check.component.version tool.name='tsc'   tool.version='Version 3.7.2'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='check.component.version'>
+      <attribute name='tool.name'/>
+      <attribute name='tool.version'/>
+      <sequential>
+         <local name='actual.tool.version'/>
+         <exec executable="/bin/sh" outputproperty='actual.tool.version' failonerror="true" osfamily="unix">
+            <arg value="-c"/>
+               <arg value="@{tool.name} --version"/>
+         </exec>
+         <exec executable="cmd" outputproperty='actual.tool.version' failonerror="true" osfamily="windows">
+            <arg value="/c"/>
+            <arg value="@{tool.name} --version"/>
+         </exec>
+         <fail message="Found @{tool.name} version ${actual.tool.version} but expected @{tool.version}">
+            <condition>
+               <not>
+                  <equals arg1="${actual.tool.version}" arg2="@{tool.version}"/>
+               </not>
+            </condition>
+         </fail>
+      </sequential>
+   </macrodef>
+
+   <verify.node.tools/>
 
 </project>

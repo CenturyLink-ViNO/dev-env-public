@@ -1,6 +1,5 @@
 /* global module */
 
-'use strict';
 
 module.exports =
 {
@@ -98,7 +97,7 @@ module.exports =
       'no-restricted-globals': 'error',            // disallow specified global variables
       'no-shadow': 'error',                        // disallow variable declarations from shadowing variables declared in the outer scope
       'no-shadow-restricted-names': 'error',       // disallow identifiers from shadowing restricted names
-      'no-undef': ['off', 'always'],               // disallow the use of undeclared variables unless mentioned in /*global */ comments
+      'no-undef': 'error',                         // disallow the use of undeclared variables unless mentioned in /*global */ comments
       'no-undef-init': 'error',                    // disallow initializing variables to undefined
       'no-undefined': ['off', 'always'],           // disallow the use of undefined as an identifier
       'no-unused-vars': 'error',                   // disallow unused variables
@@ -116,7 +115,7 @@ module.exports =
       'no-sync': 'error',                          // disallow synchronous methods
       'array-bracket-newline': 'error',            // enforce linebreaks after opening and before closing array brackets
       'array-bracket-spacing': ['error', 'never'], // enforce consistent spacing inside array brackets
-      'array-element-newline': ['error', { 'multiline': true }], // enforce line breaks after each array element
+      'array-element-newline': ['error', 'consistent'], // enforce line breaks after each array element
       'block-spacing': ['error', 'always'],        // disallow or enforce spaces inside of blocks after opening block and before closing block
       'brace-style': ['error', 'allman'],          // enforce consistent brace style for blocks
       'camelcase': ['error', { 'properties': 'always', 'ignoreDestructuring': false }],  // enforce camelcase naming convention
@@ -136,7 +135,8 @@ module.exports =
       'id-length': ['error', { 'min': 3, 'exceptions': ['id'] }],        // enforce minimum and maximum identifier lengths
       'id-match': 'error',                         // require identifiers to match a specified regular expression
       'implicit-arrow-linebreak': 'error',         // enforce the location of arrow function bodies
-      'indent': ['error', 3],                      // enforce consistent indentation
+      // 'indent': ['error', 3],                   // enforce consistent indentation
+      'indent': ['error', 3, { 'SwitchCase': 1 }],
       'jsx-quotes': ['error', 'prefer-double'],    // enforce the consistent use of either double or single quotes in JSX attributes
       // enforce consistent spacing between keys and values in object literal properties
       'key-spacing': ['error', { 'beforeColon': false, 'afterColon': true, 'mode': 'strict' }],
@@ -162,6 +162,7 @@ module.exports =
       'no-array-constructor': 'error',             // disallow Array constructors
       'no-bitwise': 'error',                       // disallow bitwise operators
       'no-continue': 'error',                      // disallow continue statements
+      'no-dupe-keys': 'error',                     // disallows duplicate keys in object literals - CDP
       'no-inline-comments': 'error',               // disallow inline comments after code
       'no-lonely-if': 'error',                     // disallow if statements as the only statement in else blocks
       'no-mixed-operators': 'error',               // disallow mixed binary operators
@@ -239,6 +240,22 @@ module.exports =
       'sort-imports': 'error',                     // enforce sorted import declarations within modules
       'symbol-description': 'error',               // require symbol descriptions
       'template-curly-spacing': ['error', 'never'], // require or disallow spacing around embedded expressions of template strings
-      'yield-star-spacing': 'error'                // require or disallow spacing around the * in yield* expressions */
-   }
+      'yield-star-spacing': 'error',                // require or disallow spacing around the * in yield* expressions */
+      'function-call-argument-newline': ['error', 'consistent']
+   },
+   'overrides':
+   [
+      {
+         'files': ['settings.js', 'settings.*.js'],
+         'rules': { 'global-require': 'off' }
+      },
+      {
+         'files': ['productDefinition.js'],
+         'rules': { 'no-unused-vars': 'off' }
+      },
+      {
+         'files': ['keycloak.js'],
+         'rules': { 'no-lone-blocks': 'off', 'no-empty': 'off' }
+      }
+   ]
 };

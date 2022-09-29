@@ -23,7 +23,7 @@
             <path location="${user.home}/ant/@{file}"/>
          </pathconvert>
          <if>
-            <available file="${user.override.file}"/>
+            <available file="@{user.override.file}"/>
             <then>
                <if>
                   <and>
@@ -31,16 +31,16 @@
                      <equals arg1='${master.build}' arg2='true'/>
                   </and>
                   <then>
-                     <echo message="reading properties from [${user.override.file}]"/>
+                     <echo message="reading properties from [@{user.override.file}]"/>
                   </then>
                </if>
                <if>
                   <matches pattern="xml$" string="@{file}"/>
                   <then>
-                     <import file="${user.override.file}"/>
+                     <import file="@{user.override.file}"/>
                   </then>
                   <else>
-                     <loadproperties srcFile="${user.override.file}"/>
+                     <loadproperties srcFile="@{user.override.file}"/>
                   </else>
                </if>
             </then>
@@ -51,7 +51,7 @@
                      <equals arg1='${master.build}' arg2='true'/>
                   </and>
                   <then>
-                     <echo message="[${user.override.file}] is not available, skipping"/>
+                     <echo message="[@{user.override.file}] is not available, skipping"/>
                   </then>
                </if>
             </else>

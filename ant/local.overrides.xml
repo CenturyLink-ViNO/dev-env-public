@@ -13,6 +13,13 @@
    <import optional='true' file='${tree.top}/${abacus.product.name}/product.settings/product.properties.xml'/>
 
    <if>
+      <available file='${user.home}/ant/ant.global.overrides.properties'/>
+      <then>
+         <property file='${user.home}/ant/ant.global.overrides.properties'/>
+      </then>
+   </if>
+
+   <if>
       <available file='${tree.top}/${abacus.product.name}/product.settings/product.properties'/>
       <then>
          <property file='${tree.top}/${abacus.product.name}/product.settings/product.properties'/>

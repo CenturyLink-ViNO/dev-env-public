@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<project name="tasks.react.xml">
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='reactUiDevClean'>
+      <attribute name='dir'/>
+      <attribute name='tree.top' default='${tree.top}'/>
+      <sequential>
+         <delete file='@{dir}/src/react/abacus-react-components-0.0.1.tgz'/>
+         <delete file='@{dir}/src/react/package-lock.json' verbose='true'/>
+         <echo message='removing files that are the same in abacus-react-base-ui'/>
+         <delete verbose='true'>
+            <fileset dir='@{dir}/src/react'>
+               <not>
+                  <different targetdir='@{tree.top}/lib-web/abacus-react-base-ui/src/react' ignoreFileTimes='true' />
+               </not>
+            </fileset>
+         </delete>
+         <deleteEmptyFolders dir='@{dir}/src/react'/>
+         <delete dir='@{dir}/src/react/node_modules'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name="deleteEmptyFolders">
+      <attribute name="dir"/>
+      <sequential>
+         <delete includeemptydirs="true">
+               <fileset dir="@{dir}"  >
+                  <and>
+                     <size value="0"/>
+                     <type type="dir"/>
+                  </and>
+               </fileset>
+         </delete>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='reactUiDevTest'>
+      <attribute name='dir'/>
+      <attribute name='abacus-react-components-file' default='abacus-react-components-0.0.1.tgz'/>
+      <sequential>
+         <react-app-dev-env abacus-react-components-file='@{abacus-react-components-file}' dir='@{dir}/src/react'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='buildAbacusReactUi'>
+      <attribute name='tree.top' default='${tree.top}'/>
+      <attribute name='tmp.dir' default='${tmp.dir}'/>
+      <element name='sass-arguments' optional='true'/>
+      <sequential>
+         <stopwatch name='buildAbacusReactUi'/>
+         <localDeployAbacusReactUi dir.dest='@{tmp.dir}' dir.src='src/react'/>
+         <localDeployAbacusReactBaseUi dir.dest='@{tmp.dir}' dir.src='@{tree.top}/lib-web/abacus-react-base-ui'/>
+         <echo message='npm install'/>
+         <execNpm dir='@{tmp.dir}/src/react'>
+            <arguments>
+               <sass-arguments/>
+               <arg value='install'/>
+               <arg value="--force"/>
+            </arguments>
+         </execNpm>
+         <echo message='npm run build'/>
+         <copy tofile='@{tmp.dir}/src/react/.eslintignore' file='${tree.top}/tools/dev-env/public/ant/macros/react/eslintignore.txt'/>
+         <copy tofile='@{tmp.dir}/src/react/.eslintrc'     file='${tree.top}/tools/dev-env/public/ant/macros/react/eslintrc.txt'/>
+         <echo append='true' message='EXTEND_ESLINT=true'  file='@{tmp.dir}/src/react/.env'/>
+         <execNpm dir='@{tmp.dir}/src/react'>
+            <arguments>
+               <sass-arguments/>
+               <arg value='run'/>
+               <arg value='build'/>
+            </arguments>
+         </execNpm>
+         <stopwatch name='buildAbacusReactUi' action='elapsed'/>
+      </sequential>
+   </macrodef>
+
+   <macrodef name='react-app-dev-env'>
+      <attribute name='abacus-react-components-file'/>
+      <attribute name='dir'/>
+      <attribute name='tree.top' default='${tree.top}'/>
+      <sequential>
+         <if>
+            <not>
+               <uptodate property='react-components-up-to-date'
+                         targetfile='@{tree.top}/build/npm.tars/@{abacus-react-components-file}'>
+                  <srcfiles dir='@{tree.top}/lib-web/abacus-react-components' includes='**/**'/>
+               </uptodate>
+            </not>
+            <then>
+               <echo message='@{tree.top}/build/npm.tars/@{abacus-react-components-file} out of date wrt @{tree.top}/lib-web/abacus-react-components'/>
+               <build.dependent.library dir='lib-web/abacus-react-components'/>
+            </then>
+            <else>
+               <echo message='@{tree.top}/build/npm.tars/@{abacus-react-components-file} up to date wrt @{tree.top}/lib-web/abacus-react-components'/>
+            </else>
+         </if>
+         <if>
+            <not>
+               <uptodate property='react-components-local-tar-up-to-date'
+                         targetfile='@{dir}/node_modules/abacus-react-components/index.js'
+                         srcfile='@{tree.top}/build/npm.tars/@{abacus-react-components-file}'/>
+            </not>
+            <then>
+               <echo message='@{dir}/node_modules/abacus-react-components/index.js out of date wrt @{tree.top}/build/npm.tars/@{abacus-react-components-file}'/>
+               <delete dir='@{dir}/node_modules/abacus-react-components'/>
+               <delete file='@{dir}/@{abacus-react-components-file}'/>
+               <copy verbose='true' todir='@{dir}' file='@{tree.top}/build/npm.tars/@{abacus-react-components-file}'/>
+               <echo message='installing dependent packages with npm install'/>
+               <execNpm dir='@{dir}'>
+                  <arguments>
+                     <arg value="install"/>
+                     <arg value="--force"/>
+                  </arguments>
+               </execNpm>
+               <touch file='@{dir}/node_modules/abacus-react-components/index.js'/>
+            </then>
+            <else>
+               <echo message='@{dir}/node_modules/abacus-react-components/index.js up to date wrt @{tree.top}/build/npm.tars/@{abacus-react-components-file}'/>
+            </else>
+         </if>
+         <localDeployAbacusReactBaseUi dir.dest='@{dir}/../..' dir.src='@{tree.top}/lib-web/abacus-react-base-ui'/>
+         <echo message='npm start'/>
+         <if>
+            <isset property="os.windows"/>
+            <then>
+               <exec executable='cmd' dir='@{dir}'>
+                  <arg value = '/c'/>
+                  <arg value = 'start'/>
+                  <arg value = 'npm'/>
+                  <arg value = 'start'/>
+               </exec>
+            </then>
+            <else>
+               <execNpm dir='@{dir}'>
+                  <arguments>
+                     <arg value="start"/>
+                  </arguments>
+               </execNpm>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='localDeployAbacusReactUi'>
+      <attribute name='dir.dest'/>
+      <attribute name='dir.src'/>
+      <attribute name='tree.top' default='${tree.top}'/>
+      <sequential>
+         <echo message='Seeding react ui from @{dir.src} to @{dir.dest}'/>
+         <mkdir dir='@{dir.dest}/src/react'/>
+         <copy todir='@{dir.dest}/src/react'>
+            <fileset dir='@{dir.src}'/>
+         </copy>
+         <copy todir='@{dir.dest}/src/react' verbose='true'>
+            <fileset dir="@{tree.top}/build/npm.tars">
+                <include name="abacus-react-components-*.tgz"/>
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='localDeployAbacusReactBaseUi'>
+      <attribute name="dir.src"/>
+      <attribute name="dir.dest"/>
+      <sequential>
+         <echo message='Adding base ui from @{dir.src} to @{dir.dest}'/>
+         <copy todir='@{dir.dest}/src/react' overwrite='false'>
+            <fileset dir='@{dir.src}/src/react'>
+               <present targetdir="@{dir.dest}/src/react" present="srconly" />
+            </fileset>
+         </copy>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+   <macrodef name='react-component-dev-env'>
+      <attribute name='dir'/>
+      <sequential>
+         <if>
+            <not>
+               <available type='dir' file='@{dir}/node_modules'/>
+            </not>
+            <then>
+               <echo message='npm install'/>
+               <execNpm dir='@{dir}'>
+                  <arguments>
+                     <arg value="install"/>
+                  </arguments>
+               </execNpm>
+            </then>
+         </if>
+         <echo message='npm start'/>
+         <if>
+            <isset property="os.windows"/>
+            <then>
+               <exec executable='cmd' dir='@{dir}'>
+                  <arg value = '/c'/>
+                  <arg value = 'start'/>
+                  <arg value = 'npm'/>
+                  <arg value = 'run'/>
+                  <arg value = 'storybook'/>
+               </exec>
+            </then>
+            <else>
+               <execNpm dir='@{dir}'>
+                  <arguments>
+                     <arg value = 'run'/>
+                     <arg value = 'storybook'/>
+                  </arguments>
+               </execNpm>
+            </else>
+         </if>
+      </sequential>
+   </macrodef>
+
+   <!-- ======================================================================================================== -->
+
+</project>

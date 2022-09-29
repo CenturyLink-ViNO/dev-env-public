@@ -3,8 +3,9 @@
 <project name="tasks.buildId.xml">
 
    <macrodef name='mark.build.complete'>
+      <attribute name='product.name' default='${product.name}'/>
       <sequential>
-         <echo message='Project: ${product.name} build complete'/>
+         <echo message='Project: @{product.name} build complete'/>
          <echo message='__________________________________________________________________________________________'/>
       </sequential>
    </macrodef>
